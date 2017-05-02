@@ -1,0 +1,9 @@
+[submodule "thomas_tomocalc"]
+	path = thomas_tomocalc
+	url = https://github.com/mwgeurts/thomas_tomocalc
+[submodule "tomo_extract"]
+	path = tomo_extract
+	url = https://github.com/mwgeurts/tomo_extract
+[submodule "gamma"]
+	path = gamma
+	url = https://github.com/mwgeurts/gamma
