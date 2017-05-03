@@ -7,3 +7,6 @@
 [submodule "gamma"]
 	path = gamma
 	url = https://github.com/mwgeurts/gamma
+[submodule "structure_atlas"]
+	path = structure_atlas
+	url = https://github.com/mwgeurts/structure_atlas

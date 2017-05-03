@@ -22,7 +22,7 @@ function varargout = CheckTomo(varargin)
 
 % Edit the above text to modify the response to help CheckTomo
 
-% Last Modified by GUIDE v2.5 02-May-2017 16:00:27
+% Last Modified by GUIDE v2.5 03-May-2017 15:54:36
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -61,9 +61,6 @@ handles.output = hObject;
 % Set version handle
 handles.version = '0.1';
 
-% Update version UI text
-handles.version_text = ['Version ', handles.version];
-
 % Determine path of current application
 [path, ~, ~] = fileparts(mfilename('fullpath'));
 
@@ -94,7 +91,7 @@ string = sprintf('%s\n', separator, string{:}, separator);
 % Log information
 Event(string, 'INIT');
 
-%% Add submodule
+%% Add submodules
 % Add matlab calculation submodule to search path
 addpath('./thomas_tomocalc');
 
@@ -134,6 +131,19 @@ if exist('CalcGamma', 'file') ~= 2
         'ERROR');
 end
 
+% Add structure atlas submodule to search path
+addpath('./structure_atlas');
+
+% Check if MATLAB can find LoadDICOMImages
+if exist('LoadAtlas', 'file') ~= 2
+    
+    % If not, throw an error
+    Event(['The Structure Atlas submodule does not exist in the ', ...
+        'search path. Use git clone --recursive or git submodule init ', ...
+        'followed by git submodule update to fetch all submodules'], ...
+        'ERROR');
+end
+
 %% Load configuration settings
 % Open file handle to config.txt file
 fid = fopen('config.txt', 'r');
@@ -164,10 +174,14 @@ clear c i fid;
 % Log completion
 Event('Loaded config.txt parameters');
 
-%% Initialize global variables
+%% Initialize UI and global variables
+% Set version UI text
+handles.version_text = ['Version ', handles.version];
+
+% Set default transparency
 set(handles.alpha, 'String', handles.config.DEFAULT_TRANSPARENCY);
 
-% Define dose calculation options
+% Set dose calculation options
 handles.methods = {
     'Standalone GPU Dose Calculator (fast)'
     'Standalone GPU Dose Calculator (full)'
@@ -180,7 +194,7 @@ set(handles.method_menu, 'Value', ...
 Event(['Default calculation method set to ', ...
     handles.methods{str2double(handles.config.DEFAULT_CALC_METHOD)}]);
 
-% Define resolution options
+% Set resolution options
 handles.resolutions = {
     'Fine (1)'
     'Normal (2)'
@@ -217,7 +231,7 @@ set(handles.tcs_menu, 'String', UpdateTCSDisplay());
 % Set line display options
 set(handles.line_menu, 'String', UpdateLineDisplay());
 
-% Default folder path when selecting input files
+% Define default folder path when selecting input files
 if strcmpi(handles.config.DEFAULT_PATH, 'userpath')
     handles.path = userpath;
 else
@@ -225,7 +239,38 @@ else
 end
 Event(['Default file path set to ', handles.path]);
 
-%% Clear UI
+% If an atlas file is specified in the config file
+if isfield(handles.config, 'ATLAS_FILE')
+    
+    % Attempt to load the atlas
+    handles.atlas = LoadAtlas(handles.config.ATLAS_FILE);
+    
+% Otherwise, declare an empty atlas
+else
+    handles.atlas = cell(0);
+end
+
+% Check for MVCT calculation flag
+if isfield(handles.config, 'ALLOW_MVCT_CALC') && ...
+        str2double(handles.config.ALLOW_MVCT_CALC) == 1
+    
+    % Log status
+    Event('MVCT dose calculation enabled');
+    
+    % Enable MVCT dose calculation
+    handles.mvctcalc = 1;
+
+% If dose calc flag does not exist or is disabled
+else
+    
+    % Log status
+    Event('MVCT dose calculation disabled');
+    
+    % Disable MVCT dose calculation
+    handles.mvctcalc = 0;
+end
+
+%% Clear UI, initializing plots
 handles = clearData(handles);
 
 % Update handles structure
@@ -245,10 +290,11 @@ function tcs_menu_Callback(hObject, ~, handles) %#ok<*DEFNU>
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% HERE
+% Execute UpdateTCSDisplay
+handles = UpdateTCSDisplay(handles);
 
-
-
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function tcs_menu_CreateFcn(hObject, ~, ~)
@@ -390,6 +436,9 @@ if ~isequal(name, 0)
             handles.planuid = handles.plans{1};
         end
         
+        % Initialize progress bar
+        progress = waitbar(0.1, 'Loading plan from patient archive...');
+        
         % Log start
         Event(['Loading plan, planning image, and reference dose for ', ...
             'selected plan']);
@@ -401,20 +450,97 @@ if ~isequal(name, 0)
         set(handles.image_menu, 'String', {'Planning CT'});
         set(handles.image_menu, 'Value', 1);
         
+        % Update progress bar
+        waitbar(0.2, progress, 'Loading image sets...');
+        
         % Load the planning CT
-        handles.image = LoadImage(path, name, handles.planuid);
+        handles.referenceImage = LoadImage(path, name, handles.planuid);
+
+        % Add MVCT images
+        %
+        %
+        %
+        %
+        %
+        %  
+        
+        % Enable the image menu
+        set(handles.image_menu, 'Enable', 'On');
+        
+        % Update progress bar
+        waitbar(0.4, progress, 'Loading structure set...');
+        
+        % Load the structure set
+        handles.referenceImage.structures = LoadStructures(path, name, ...
+            handles.referenceImage, handles.atlas);
+        
+        % Initialize statistics table
+        set(handles.struct_table, 'Data', InitializeStatistics(...
+            handles.referenceImage.structures, handles.atlas));
+        
+        % Update progress bar
+        waitbar(0.6, progress, 'Loading planned dose...');
         
         % Load the reference dose
-        handles.refdose = LoadPlanDose(path, name, handles.planuid);
+        handles.referenceDose = LoadPlanDose(path, name, handles.planuid);
         
-        % Display the planning dose by executing tcs_menu_callback
+        % Update progress bar
+        waitbar(0.8, progress, 'Updating dose display...');
+        
+        % Display the planning dose by initializing new figure objects
         set(handles.tcs_menu, 'Value', 1);
-        handles = tcs_menu_Callback(handles.tcs_menu, [], handles);
+        handles.transverse = ImageViewer('axis', handles.trans_axes, ...
+            'tcsview', 'T', 'background', handles.referenceImage, ...
+            'overlay', handles.referenceDose, 'alpha', ...
+            sscanf(get(handles.alpha, 'String'), '%f%%')/100, ...
+            'structures', handles.referenceImage.structures, ...
+            'structuresonoff', handles.struct_table, ...
+            'slider', handles.trans_slider, 'cbar', 'off');
+        handles.coronal = ImageViewer('axis', handles.cor_axes, ...
+            'tcsview', 'C', 'background', handles.referenceImage, ...
+            'overlay', handles.referenceDose, 'alpha', ...
+            sscanf(get(handles.alpha, 'String'), '%f%%')/100, ...
+            'structures', handles.referenceImage.structures, ...
+            'structuresonoff', handles.struct_table, ...
+            'slider', handles.cor_slider, 'cbar', 'off');
+        handles.sagittal = ImageViewer('axis', handles.sag_axes, ...
+            'tcsview', 'S', 'background', handles.referenceImage, ...
+            'overlay', handles.referenceDose, 'alpha', ...
+            sscanf(get(handles.alpha, 'String'), '%f%%')/100, ...
+            'structures', handles.referenceImage.structures, ...
+            'structuresonoff', handles.struct_table, ...
+            'slider', handles.sag_slider, 'cbar', 'on');
+        set(handles.alpha, 'visible', 'on');
+
+        % Update DVH plot
+        [handles.referenceDose.dvh] = ...
+            UpdateDVH(handles.dvh_axes, get(handles.struct_table, 'Data'), ...
+            handles.referenceImage, handles.referenceDose);
+        
+        % Update Dx/Vx statistics
+        set(handles.struct_table, 'Data', UpdateDoseStatistics(...
+            get(handles.struct_table, 'Data'), [], ...
+            handles.referenceDose.dvh, []));
+        
+        % Enable the results and display tables
+        set(handles.stats_table, 'enable', 'on');
+        set(handles.struct_table, 'enable', 'on');
+        
+        % Enable the display options
+        set(handles.tcs_menu, 'Enable', 'On');
+        set(handles.line_menu, 'Enable', 'On');
         
         % Enable the calculation options
         set(handles.method_menu, 'Enable', 'On');
         set(handles.resolution_menu, 'Enable', 'On');
         set(handles.dose_button, 'Enable', 'on');
+        
+        % Close progress bar
+        close(progress);
+        
+        % Log completion
+        Event(['Archive load completed successfully. You may now select ', ...
+            'options and recalculate dose']);
         
     % Otherwise, no eligible plans were found
     else
@@ -431,7 +557,7 @@ else
 end
 
 % Clear temporary variables
-clear name path;
+clear name path progress;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -447,14 +573,14 @@ function method_menu_Callback(hObject, eventdata, handles)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function method_menu_CreateFcn(hObject, eventdata, handles)
+function method_menu_CreateFcn(hObject, ~, ~)
 % hObject    handle to method_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+% Popupmenu controls usually have a white background on Windows.
+if ispc && isequal(get(hObject,'BackgroundColor'), ...
+        get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
@@ -470,14 +596,14 @@ function resolution_menu_Callback(hObject, eventdata, handles)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function resolution_menu_CreateFcn(hObject, eventdata, handles)
+function resolution_menu_CreateFcn(hObject, ~, ~)
 % hObject    handle to resolution_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+% Popupmenu controls usually have a white background on Windows.
+if ispc && isequal(get(hObject,'BackgroundColor'), ...
+        get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
@@ -493,14 +619,14 @@ function gamma_text_Callback(hObject, eventdata, handles)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function gamma_text_CreateFcn(hObject, eventdata, handles)
+function gamma_text_CreateFcn(hObject, ~, ~)
 % hObject    handle to gamma_text (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+% Edit controls usually have a white background on Windows.
+if ispc && isequal(get(hObject,'BackgroundColor'), ...
+        get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
@@ -543,14 +669,16 @@ function gamma_button_Callback(hObject, eventdata, handles)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function trans_slider_Callback(hObject, eventdata, handles)
+function trans_slider_Callback(hObject, ~, handles)
 % hObject    handle to trans_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+% Update transverse plot
+handles.transverse.Update('slice', round(get(hObject, 'Value')));
 
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function trans_slider_CreateFcn(hObject, ~, ~)
@@ -565,11 +693,16 @@ if isequal(get(hObject,'BackgroundColor'), ...
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function cor_slider_Callback(hObject, eventdata, handles)
+function cor_slider_Callback(hObject, ~, handles)
 % hObject    handle to cor_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% Update coronal plot
+handles.coronal.Update('slice', round(get(hObject, 'Value')));
+
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function cor_slider_CreateFcn(hObject, ~, ~)
@@ -583,16 +716,17 @@ if isequal(get(hObject,'BackgroundColor'), ...
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function sag_slider_Callback(hObject, eventdata, handles)
+function sag_slider_Callback(hObject, ~, handles)
 % hObject    handle to sag_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+% Update sagittal plot
+handles.sagittal.Update('slice', round(get(hObject, 'Value')));
 
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function sag_slider_CreateFcn(hObject, ~, ~)
@@ -607,14 +741,39 @@ if isequal(get(hObject,'BackgroundColor'), ...
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function alpha_Callback(hObject, eventdata, handles)
+function alpha_Callback(hObject, ~, handles)
 % hObject    handle to alpha (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of alpha as text
-%        str2double(get(hObject,'String')) returns contents of alpha as a double
+% If the string contains a '%', parse the value
+if ~isempty(strfind(get(hObject, 'String'), '%'))
+    value = sscanf(get(hObject, 'String'), '%f%%');
+    
+% Otherwise, attempt to parse the response as a number
+else
+    value = str2double(get(hObject, 'String'));
+end
 
+% Bound value to [0 100]
+value = max(0, min(100, value));
+
+% Log event
+Event(sprintf('Dose transparency set to %0.0f%%', value));
+
+% Update string with formatted value
+set(hObject, 'String', sprintf('%0.0f%%', value));
+
+% Update plots
+handles.transverse.Update('alpha', value/100);
+handles.coronal.Update('alpha', value/100);
+handles.sagittal.Update('alpha', value/100);
+  
+% Clear temporary variable
+clear value;
+
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function alpha_CreateFcn(hObject, ~, ~)
@@ -661,38 +820,54 @@ function image_menu_Callback(hObject, eventdata, handles)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function image_menu_CreateFcn(hObject, eventdata, handles)
+function image_menu_CreateFcn(hObject, ~, ~)
 % hObject    handle to image_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+% Popupmenu controls usually have a white background on Windows.
+if ispc && isequal(get(hObject,'BackgroundColor'), ...
+        get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function handles = clearData(handles)
-% This function clears all data
+% This function clears all data and resets all UI components. This function
+% is also called during program initialization to set up the interface and
+% all internal variables.
+
+% Log action
+Event('Resetting all variables and clearing display');
 
 % Disable plots
-set(allchild(handles.trans_axes), 'visible', 'off'); 
-set(handles.trans_axes, 'visible', 'off');
-set(allchild(handles.cor_axes), 'visible', 'off'); 
-set(handles.cor_axes, 'visible', 'off');
-set(allchild(handles.sag_axes), 'visible', 'off'); 
-set(handles.sag_axes, 'visible', 'off');
-colorbar(handles.sag_axes, 'off');
+if isfield(handles, 'transverse')
+    delete(handles.transverse);
+else
+    set(allchild(handles.trans_axes), 'visible', 'off'); 
+    set(handles.trans_axes, 'visible', 'off');
+    set(handles.trans_slider, 'visible', 'off');
+end
+if isfield(handles, 'coronal')
+    delete(handles.coronal);
+else
+    set(allchild(handles.cor_axes), 'visible', 'off'); 
+    set(handles.cor_axes, 'visible', 'off');
+    set(handles.cor_slider, 'visible', 'off');
+end
+if isfield(handles, 'sagittal')
+    delete(handles.sagittal);
+else
+    set(allchild(handles.sag_axes), 'visible', 'off'); 
+    set(handles.sag_axes, 'visible', 'off');
+    set(handles.sag_slider, 'visible', 'off');
+end
 set(handles.line_axes, 'visible', 'off');
 set(allchild(handles.line_axes), 'visible', 'off'); 
 set(handles.dvh_axes, 'visible', 'off');
 set(allchild(handles.dvh_axes), 'visible', 'off'); 
 
 % Disable sliders/alpha
-set(handles.trans_slider, 'visible', 'off');
-set(handles.cor_slider, 'visible', 'off');
-set(handles.sag_slider, 'visible', 'off');
 set(handles.line_slider, 'visible', 'off');
 set(handles.alpha, 'visible', 'off');
 
@@ -714,6 +889,71 @@ set(handles.gamma_button, 'enable', 'off');
 handles.plans = [];
 handles.plan = [];
 handles.planuid = [];
-handles.image = [];
-handles.refdose = [];
-handles.dose = [];
+handles.referenceImage = [];
+handles.mergedImage = [];
+handles.referenceDose = [];
+handles.secondDose = [];
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function struct_table_CellEditCallback(hObject, eventdata, handles)
+% hObject    handle to dvh_table (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.TABLE)
+%	Indices: row and column indices of the cell(s) edited
+%	PreviousData: previous data for the cell(s) edited
+%	EditData: string(s) entered by the user
+%	NewData: EditData or its converted form set on the Data property. Empty 
+%       if Data was not changed
+%	Error: error string when failed to convert EditData to appropriate 
+%       value for Data
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get current data
+stats = get(hObject, 'Data');
+
+% Verify edited Dx value is a number or empty
+if eventdata.Indices(2) == 3 && isnan(str2double(...
+        stats{eventdata.Indices(1), eventdata.Indices(2)})) && ...
+        ~isempty(stats{eventdata.Indices(1), eventdata.Indices(2)})
+    
+    % Warn user
+    Event(sprintf(['Dx value "%s" is not a number, reverting to previous ', ...
+        'value'], stats{eventdata.Indices(1), eventdata.Indices(2)}), 'WARN');
+    
+    % Revert value to previous
+    stats{eventdata.Indices(1), eventdata.Indices(2)} = ...
+        eventdata.PreviousData;
+    
+% Otherwise, if Dx was changed
+elseif eventdata.Indices(2) == 3
+    
+    % Update edited Dx/Vx statistic
+    stats = UpdateDoseStatistics(stats, eventdata.Indices);
+    
+% Otherwise, if display value was changed
+elseif eventdata.Indices(2) == 2
+
+    % Update the image plots are displayed
+    if strcmpi(get(handles.alpha, 'visible'), 'on')
+        
+        % Update plots
+        handles.transverse.Update('structuresonoff', stats);
+        handles.coronal.Update('structuresonoff', stats);
+        handles.sagittal.Update('structuresonoff', stats);
+    end
+
+    % Update DVH plot if it is displayed
+    if strcmp(get(handles.dvh_axes, 'visible'), 'on')
+        
+        % Update DVH plot
+        UpdateDVH(stats); 
+    end
+end
+
+% Set new table data
+set(hObject, 'Data', stats);
+
+% Clear temporary variable
+clear stats;
+
+% Update handles structure
+guidata(hObject, handles);
