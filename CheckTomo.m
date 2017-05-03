@@ -181,13 +181,69 @@ handles.version_text = ['Version ', handles.version];
 % Set default transparency
 set(handles.alpha, 'String', handles.config.DEFAULT_TRANSPARENCY);
 
-% Set dose calculation options
+% Set initial dose calculation options (only MATLAB)
 handles.methods = {
-    'Standalone GPU Dose Calculator (fast)'
-    'Standalone GPU Dose Calculator (full)'
     'MATLAB Dose Calculator (no supersampling)'
     'MATLAB Dose Calculator (supersampling)'
 };
+
+% Test for connection to Standalone calculator
+handles.gpudose = 0;
+
+% Declare path to beam model folder (if not specified in config file, use
+% default path of ./GPU)
+if isfield(handles.config, 'MODEL_PATH')
+    handles.modeldir = handles.config.MODEL_PATH;
+else
+    handles.modeldir = './model';
+end
+
+% Check for beam model files
+if exist(fullfile(handles.modeldir, 'dcom.header'), 'file') == 2 && ...
+        exist(fullfile(handles.modeldir, 'fat.img'), 'file') == 2 && ...
+        exist(fullfile(handles.modeldir, 'kernel.img'), 'file') == 2 && ...
+        exist(fullfile(handles.modeldir, 'lft.img'), 'file') == 2 && ...
+        exist(fullfile(handles.modeldir, 'penumbra.img'), 'file') == 2
+
+    % Log name
+    Event('Beam model files verified for standalone calculator');
+    
+    % Check for presence of dose calculator
+    handles.gpudose = CalcDose();
+    
+    % If calc dose was successful
+    if handles.gpudose == 1
+
+        % Log dose calculation status
+        Event('Standalone GPU Dose calculation available');
+
+        % Add GPU options
+        handles.methods{length(handles.methods)+1} = ...
+            'Standalone GPU Dose Calculator (fast)';
+        handles.methods{length(handles.methods)+1} = ...
+            'Standalone GPU Dose Calculator (full)';
+
+    % Otherwise, calc dose was not successful
+    else
+
+        % Log dose calculation status
+        Event('Standalone dose calculation engine not available', 'WARN');
+        
+        % Store status
+        handles.gpudose = 0;
+    end
+else
+
+    % Store status
+    handles.gpudose = 0;
+
+    % Throw a warning
+    Event(sprintf(['Standalone dose calculation disabled, beam model ', ...
+        'not found. Verify that %s exists and contains the necessary ', ...
+        'model files'], handles.modeldir), 'WARN');
+end
+
+% Set calculation options
 set(handles.method_menu, 'String', handles.methods);
 set(handles.method_menu, 'Value', ...
     str2double(handles.config.DEFAULT_CALC_METHOD));
@@ -333,7 +389,6 @@ function browse_text_Callback(~, ~, ~)
 % hObject    handle to browse_text (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function browse_text_CreateFcn(hObject, ~, ~)
@@ -528,7 +583,10 @@ if ~isequal(name, 0)
         
         % Enable the display options
         set(handles.tcs_menu, 'Enable', 'On');
-        set(handles.line_menu, 'Enable', 'On');
+        % set(handles.line_menu, 'Enable', 'On');
+        
+        % Update results table
+        set(handles.stats_table, 'Data', UpdateResults(handles));
         
         % Enable the calculation options
         set(handles.method_menu, 'Enable', 'On');
@@ -607,7 +665,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), ...
     set(hObject,'BackgroundColor','white');
 end
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function gamma_text_Callback(hObject, eventdata, handles)
 % hObject    handle to gamma_text (see GCBO)
@@ -642,23 +699,32 @@ function local_menu_Callback(hObject, eventdata, handles)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function local_menu_CreateFcn(hObject, eventdata, handles)
+function local_menu_CreateFcn(hObject, ~, ~)
 % hObject    handle to local_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+% Popupmenu controls usually have a white background on Windows.
+if ispc && isequal(get(hObject,'BackgroundColor'), ...
+        get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function dose_button_Callback(hObject, eventdata, handles)
 % hObject    handle to dose_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+%
+% HERE
+
+
+
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -840,6 +906,15 @@ function handles = clearData(handles)
 % Log action
 Event('Resetting all variables and clearing display');
 
+% Clear/initialize non-UI variables
+handles.plans = [];
+handles.plan = [];
+handles.planuid = [];
+handles.referenceImage = [];
+handles.mergedImage = [];
+handles.referenceDose = [];
+handles.secondDose = [];
+
 % Disable plots
 if isfield(handles, 'transverse')
     delete(handles.transverse);
@@ -871,6 +946,9 @@ set(allchild(handles.dvh_axes), 'visible', 'off');
 set(handles.line_slider, 'visible', 'off');
 set(handles.alpha, 'visible', 'off');
 
+% Clear results table
+set(handles.stats_table, 'Data', UpdateResults(handles));
+
 % Disable tables and plot dropdowns
 set(handles.stats_table, 'enable', 'off');
 set(handles.struct_table, 'enable', 'off');
@@ -884,15 +962,6 @@ set(handles.image_menu, 'String', 'Planning CT');
 % Disable calculation buttons
 set(handles.dose_button, 'enable', 'off');
 set(handles.gamma_button, 'enable', 'off');
-
-% Initialize non-UI variables
-handles.plans = [];
-handles.plan = [];
-handles.planuid = [];
-handles.referenceImage = [];
-handles.mergedImage = [];
-handles.referenceDose = [];
-handles.secondDose = [];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function struct_table_CellEditCallback(hObject, eventdata, handles)

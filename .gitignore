@@ -1,4 +1,5 @@
 *.m~
 log.txt
 .DS_STORE
-
+ganymed-ssh2*
+model/*

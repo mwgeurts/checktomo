@@ -44,6 +44,7 @@ elseif nargin == 1
     
     % Set input variables
     handles = varargin{1};
+    t = tic;
     
 % Otherwise, throw an error
 else 
@@ -204,7 +205,7 @@ switch get(handles.tcs_menu, 'Value')
 end
 
 % Log completion
-Event(sprintf('Plot updated successfully in %0.3f seconds', toc(t)));
+Event(sprintf('Plots updated successfully in %0.3f seconds', toc(t)));
 
 % Clear temporary variables
 clear t;
