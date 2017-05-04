@@ -176,7 +176,7 @@ Event('Loaded config.txt parameters');
 
 %% Initialize UI and global variables
 % Set version UI text
-handles.version_text = ['Version ', handles.version];
+set(handles.version_text, 'String', ['Version ', handles.version]);
 
 % Set default transparency
 set(handles.alpha, 'String', handles.config.DEFAULT_TRANSPARENCY);
@@ -264,21 +264,21 @@ Event(['Default resolution set to ', ...
     handles.resolutions{str2double(handles.config.DEFAULT_RESOLUTION)}]);
 
 % Set Gamma criteria
-handles.percent = str2double(handles.config.GAMMA_PERCENT); % percent
-handles.dta = str2double(handles.config.GAMMA_DTA_MM); % mm
-handles.local = str2double(handles.config.GAMMA_LOCAL); % boolean
 set(handles.gamma_text, 'String', sprintf('%0.1f%%/%0.1f mm', ...
-    handles.percent, handles.dta));
+    str2double(handles.config.GAMMA_PERCENT), ...
+    str2double(handles.config.GAMMA_DTA_MM)));
 set(handles.gamma_text, 'enable', 'off');
 set(handles.local_menu, 'String', {'Global', 'Local'});
-set(handles.local_menu, 'Value', handles.local+1);
+set(handles.local_menu, 'Value', str2double(handles.config.GAMMA_LOCAL)+1);
 set(handles.local_menu, 'enable', 'off');
-if handles.local == 0
+if str2double(handles.config.GAMMA_LOCAL) == 0
     Event(sprintf('Gamma criteria set to %0.1f%%/%0.1f mm global', ...
-        handles.percent, handles.dta));
+        str2double(handles.config.GAMMA_PERCENT), ...
+        str2double(handles.config.GAMMA_DTA_MM)));
 else
     Event(sprintf('Gamma criteria set to %0.1f%%/%0.1f mm local', ...
-        handles.percent, handles.dta));
+        str2double(handles.config.GAMMA_PERCENT), ...
+        str2double(handles.config.GAMMA_DTA_MM)));
 end
 
 % Set TCS display options
@@ -621,13 +621,17 @@ clear name path progress;
 guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function method_menu_Callback(hObject, eventdata, handles)
+function method_menu_Callback(hObject, ~, handles)
 % hObject    handle to method_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns method_menu contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from method_menu
+% Log choice
+Event(['User chose to calculate dose via ', ...
+    handles.methods{get(hObject,'Value')}]);
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -642,16 +646,18 @@ if ispc && isequal(get(hObject,'BackgroundColor'), ...
     set(hObject,'BackgroundColor','white');
 end
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function resolution_menu_Callback(hObject, eventdata, handles)
+function resolution_menu_Callback(hObject, ~, handles)
 % hObject    handle to resolution_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns resolution_menu contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from resolution_menu
+% Log choice
+Event(['User chose a resolution of ', ...
+    handles.resolutions{get(hObject,'Value')}]);
 
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function resolution_menu_CreateFcn(hObject, ~, ~)
@@ -689,14 +695,23 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function local_menu_Callback(hObject, eventdata, handles)
+function local_menu_Callback(hObject, ~, handles)
 % hObject    handle to local_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns local_menu contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from local_menu
+% Retrieve options
+contents = cellstr(get(hObject, 'String'));
 
+% Log choice
+Event(['Gamma absolute criteria set to ', ...
+    contents{get(hObject,'Value')}, ' locale']);
+
+% Clear temporary variables
+clear contents;
+
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function local_menu_CreateFcn(hObject, ~, ~)
@@ -711,21 +726,197 @@ if ispc && isequal(get(hObject,'BackgroundColor'), ...
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function dose_button_Callback(hObject, eventdata, handles)
+function dose_button_Callback(hObject, ~, handles)
 % hObject    handle to dose_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%
-% HERE
+% Store method and resolution
+handles.doseStats.method = ...
+    handles.methods{get(handles.method_menu, 'Value')};
+handles.doseStats.resolution = ...
+    handles.resolutions{get(handles.resolution_menu, 'Value')};
 
+% Store image options
+images = get(handles.image_menu, 'String');
 
+% If the selected image is the plannign CT
+if strcmp(images{get(handles.image_menu, 'Value')}, 'Planning CT')
+    
+    % Store the planning image
+    image = handles.referenceImage;
+else
+    
+   % Add MVCT option here
+   %
+   %
+   %
+   %
+   %
+   %
+    
+end
 
+% Log event
+Event(['Starting dose calculation using the algorithm ', ...
+    handles.doseStats.method, ' and resolution ', ...
+    handles.doseStats.resolution]);
 
+% If the user chose to use MATLAB
+if strcmp(handles.doseStats.method(1:6), 'MATLAB')
+    
+    % Initialize progress bar
+    progress = waitbar(0.1, 'Preparing dose calculation...');
+    
+    % Parse out the downsampling option
+    c = regexp(handles.doseStats.resolution, '([0-9])');
+    handles.doseStats.downsample = ...
+        str2double(handles.doseStats.resolution(c:c));
+    
+    % If the downsampling factor is less than 4, confirm user wants this
+    if handles.doseStats.downsample < 4
+        
+        % Ask user if they want to calculate at this resolution
+        choice = questdlg(['Fine or normal resolution calculations can take ', ...
+            'a long time in MATLAB and require significant memory. Are you ', ...
+            'sure you want to continue?'], 'Confirm Resolution', ...
+            'Yes', 'No', 'Yes');
+    
+        % If the user chose no
+        if strcmp(choice, 'No')
+            
+            % Log choice
+            Event(['User chose not to continue calculating ', ...
+                'at this resolution']);
+            
+            % Close progress bar
+            close(progress);
+            
+            % End execution
+            return;
+        end
+    end
+    
+    % Parse out the supersampling option
+    if strcmp(handles.doseStats.method(end-17:end), '(no supersampling)')
+        handles.doseStats.supersample = 1;
+    else
+        handles.doseStats.supersample = 3;
+    end
+    
+    % Set reference dose rate option (default to 8.5 Gy/min if not present)
+    if isfield(handles.config, 'MATLAB_DOSE_RATE')
+        handles.doseStats.doserate = ...
+            str2double(handles.config.MATLAB_DOSE_RATE);
+    else
+        handles.doseStats.doserate = 8.5;
+    end   
+        
+    % Start calculation pool, if configured
+    if isfield(handles.config, 'MATLAB_POOL') && isempty(gcp('nocreate'))
+        
+        % Update progress bar
+        waitbar(0.3, progress, 'Starting calculation pool...');
+        
+        % Log event
+        Event(sprintf('Starting calculation pool with %i workers', ...
+            str2double(handles.config.MATLAB_POOL)));
+        
+        % Start calculation pool
+        handles.pool = parpool(str2double(handles.config.MATLAB_POOL));
+    else
+        
+        % Store empty value
+        handles.pool = gcp;
+    end
+    
+    % Update progress bar
+    waitbar(0.5, progress, 'Calculating Dose...');
+    
+    % Log event
+    Event('Executing CheckTomoDose');
 
+    % Start timer
+    t = tic;
+    
+    % Execute dose calculation
+    handles.secondDose = CheckTomoDose(image, handles.plan, handles.pool, ...
+        'downsample', handles.doseStats.downsample, 'reference_doserate', ...
+        handles.doseStats.doserate, 'num_of_subprojections', ...
+        handles.doseStats.supersample);
+    
+% Otherwise, if the user chose 
+elseif strcmp(handles.doseStats.method(1:10), ...
+        'Standalone')
 
+    
+    % Add standalone calculator here
+    %
+    %
+    %
+    %
+    %
+    %
+ 
+% Otherwise, we don't know what the option is
+else
+    Event('An unknown dose calculation option was chosen', 'ERROR');
+end
 
+% If a valid dose was returned
+if isfield(handles, 'secondDose') && isstruct(handles.secondDose)
+    
+    % Stop timer and store computation time
+    handles.doseStats.calctime = toc(t);
+    
+    % Update progress bar
+    waitbar(0.8, progress, 'Calculating statistics...');
+    
+    % Log event
+    Event('Computing dose difference statistics');
+    
+    % Store dose difference
+    diff = handles.secondDose.data - handles.referenceDose.data;
+    
+    % Compute local or global relative difference based on setting
+    if get(handles.local_menu, 'Value') == 1
+        handles.doseDiff = diff / max(max(max(handles.referenceDose.data)));
+    else
+        handles.doseDiff = diff ./ handles.referenceDose.data;
+    end
+    
+    % Apply threshold 
+    handles.doseStats.meandiff = mean(mean(mean(handles.doseDiff .* ...
+        ceil(handles.doseDiff / max(max(max(handles.referenceDose.data))) - ...
+        str2double(handles.config.DOSE_THRESHOLD))))) * 100;
+    
+    % Update progress bar
+    waitbar(0.9, progress, 'Updating dose display...');
+    
+    % Execute UpdateTCSDisplay to update plots
+    handles = UpdateTCSDisplay(handles);
+    
+    % Update DVH plot
+    [handles.referenceDose.dvh, handles.secondDose.dvh] = ...
+        UpdateDVH(handles.dvh_axes, get(handles.struct_table, 'Data'), ...
+        handles.referenceImage, handles.referenceDose, ...
+        handles.referenceImage, handles.secondDose);
 
+    % Update Dx/Vx statistics
+    set(handles.struct_table, 'Data', UpdateDoseStatistics(...
+        get(handles.struct_table, 'Data'), [], ...
+        handles.referenceDose.dvh, handles.secondDose.dvh));
+    
+    % Close progress bar
+    close(progress);
+end
+
+% Clear temporary variables
+clear t c downsample method resolution supersample image images doserate ...
+    progress diff;
+
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function gamma_button_Callback(hObject, eventdata, handles)
@@ -914,6 +1105,8 @@ handles.referenceImage = [];
 handles.mergedImage = [];
 handles.referenceDose = [];
 handles.secondDose = [];
+handles.doseDiff = [];
+handles.doseStats = [];
 
 % Disable plots
 if isfield(handles, 'transverse')
