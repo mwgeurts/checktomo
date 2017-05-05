@@ -222,6 +222,8 @@ if exist(fullfile(handles.modeldir, 'dcom.header'), 'file') == 2 && ...
             'Standalone GPU Dose Calculator (fast)';
         handles.methods{length(handles.methods)+1} = ...
             'Standalone GPU Dose Calculator (full)';
+        handles.methods{length(handles.methods)+1} = ...
+            'Standalone CPU Dose Calculator';
 
     % Otherwise, calc dose was not successful
     else
@@ -370,7 +372,11 @@ function line_menu_Callback(hObject, ~, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% Update line plot
+handles = UpdateLineDisplay(handles);
 
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function line_menu_CreateFcn(hObject, ~, ~)
@@ -583,10 +589,13 @@ if ~isequal(name, 0)
         
         % Enable the display options
         set(handles.tcs_menu, 'Enable', 'On');
-        % set(handles.line_menu, 'Enable', 'On');
+        set(handles.line_menu, 'Enable', 'On');
         
         % Update results table
         set(handles.stats_table, 'Data', UpdateResults(handles));
+        
+        % Update line plot
+        handles = UpdateLineDisplay(handles);
         
         % Enable the calculation options
         set(handles.method_menu, 'Enable', 'On');
@@ -677,9 +686,42 @@ function gamma_text_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of gamma_text as text
-%        str2double(get(hObject,'String')) returns contents of gamma_text as a double
+% Retrieve Gamma criteria
+c = strsplit(get(hObject, 'String'), '/');
 
+% If the user didn't include a /
+if length(c) < 2
+
+    % Throw a warning
+    Event(['When entering Gamma criteria, you must provide the ', ...
+        'form ##%/## mm'], 'WARN');
+    
+    % Display a message box
+    msgbox(['When entering Gamma criteria, you must provide the ', ...
+        'form ##%/## mm']);
+    
+    % Reset the gammav
+    set(handles.gamma_text, 'String', sprintf('%0.1f%%/%0.1f mm', ...
+        str2double(handles.config.GAMMA_PERCENT), ...
+        str2double(handles.config.GAMMA_DTA_MM)));
+
+% Otherwise two values were found
+else
+    
+    % Parse values
+    set(hObject, 'String', sprintf('%0.1f%%/%0.1f mm', ...
+        str2double(regexprep(c{1}, '[^\d\.]', '')), ...
+        str2double(regexprep(c{2}, '[^\d\.]', ''))));
+    
+    % Log change
+    Event(['Gamma criteria set to ', get(hObject, 'String')]);
+end
+
+% Clear temporary variables
+clear c;
+
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function gamma_text_CreateFcn(hObject, ~, ~)
@@ -692,7 +734,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), ...
         get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function local_menu_Callback(hObject, ~, handles)
@@ -849,14 +890,54 @@ if strcmp(handles.doseStats.method(1:6), 'MATLAB')
 elseif strcmp(handles.doseStats.method(1:10), ...
         'Standalone')
 
+    % Initialize progress bar
+    progress = waitbar(0.1, 'Preparing dose calculation...');
     
-    % Add standalone calculator here
-    %
-    %
-    %
-    %
-    %
-    %
+    % Parse out the downsampling option
+    c = regexp(handles.doseStats.resolution, '([0-9])');
+    handles.doseStats.downsample = ...
+        str2double(handles.doseStats.resolution(c:c));
+    
+    % Parse out the GPU/CPU options
+    c = regexp(handles.doseStats.method, 'GPU');
+    
+    % Set parameters for GPU fast option
+    if ~isempty(c) && strcmp(handles.doseStats.method(end-5:end), '(fast)')
+        handles.doseStats.supersample = 0;
+        handles.doseStats.azimuths = 4;
+        handles.doseStats.raysteps = 1;
+        handles.doseStats.sadose = 0;
+        
+    % Set parameters for GPU full option
+    elseif ~isempty(c)
+        handles.doseStats.supersample = 1;
+        handles.doseStats.azimuths = 16;
+        handles.doseStats.raysteps = 1.5;
+        handles.doseStats.sadose = 0;
+        
+    % Set parameters for CPU fast option
+    else
+        handles.doseStats.supersample = 0;
+        handles.doseStats.azimuths = 4;
+        handles.doseStats.raysteps = 1;
+        handles.doseStats.sadose = 1;
+    end
+    
+    % Update progress bar
+    waitbar(0.3, progress, 'Calculating Dose...');
+    
+    % Log event
+    Event('Executing CalcDose');
+
+    % Start timer
+    t = tic;
+    
+    % Execute dose calculation
+    handles.secondDose = CalcDose(image, handles.plan, 'downsample', ...
+        handles.doseStats.downsample, 'supersample', ...
+        handles.doseStats.supersample, 'azimuths', ...
+        handles.doseStats.azimuths, 'sadose', handles.doseStats.sadose, ...
+        'modelfolder', handles.config.MODEL_PATH);
  
 % Otherwise, we don't know what the option is
 else
@@ -880,20 +961,28 @@ if isfield(handles, 'secondDose') && isstruct(handles.secondDose)
     
     % Compute local or global relative difference based on setting
     if get(handles.local_menu, 'Value') == 1
-        handles.doseDiff = diff / max(max(max(handles.referenceDose.data)));
+        diff = diff / max(max(max(handles.referenceDose.data)));
     else
-        handles.doseDiff = diff ./ handles.referenceDose.data;
+        diff = diff ./ handles.referenceDose.data;
     end
     
-    % Apply threshold 
-    handles.doseStats.meandiff = mean(mean(mean(handles.doseDiff .* ...
-        ceil(handles.doseDiff / max(max(max(handles.referenceDose.data))) - ...
-        str2double(handles.config.DOSE_THRESHOLD))))) * 100;
+    % Apply threshold and store mean difference 
+    handles.doseStats.meandiff = sum(reshape(diff .* (handles.referenceDose.data > ...
+        str2double(handles.config.DOSE_THRESHOLD) * ...
+        max(max(max(handles.referenceDose.data)))), 1, [])) / ...
+        sum(reshape(handles.referenceDose.data > ...
+        str2double(handles.config.DOSE_THRESHOLD) * ...
+        max(max(max(handles.referenceDose.data))), 1, []));
+    
+    % Store dose grid size
+    handles.doseStats.gridSize = image.width .* ...
+        [handles.doseStats.downsample handles.doseStats.downsample 1];
     
     % Update progress bar
     waitbar(0.9, progress, 'Updating dose display...');
     
-    % Execute UpdateTCSDisplay to update plots
+    % Execute UpdateTCSDisplay to update plots with second dose
+    set(handles.tcs_menu, 'Value', 2);
     handles = UpdateTCSDisplay(handles);
     
     % Update DVH plot
@@ -907,6 +996,17 @@ if isfield(handles, 'secondDose') && isstruct(handles.secondDose)
         get(handles.struct_table, 'Data'), [], ...
         handles.referenceDose.dvh, handles.secondDose.dvh));
     
+    % Update line plot
+    handles = UpdateLineDisplay(handles);
+    
+    % Update results
+    set(handles.stats_table, 'Data', UpdateResults(handles));
+    
+    % Enable Gamma options
+    set(handles.gamma_text, 'Enable', 'on');
+    set(handles.local_menu, 'Enable', 'on');
+    set(handles.gamma_button, 'Enable', 'on');
+    
     % Close progress bar
     close(progress);
 end
@@ -919,11 +1019,61 @@ clear t c downsample method resolution supersample image images doserate ...
 guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function gamma_button_Callback(hObject, eventdata, handles)
+function gamma_button_Callback(hObject, ~, handles)
 % hObject    handle to gamma_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% Update progress bar
+progress = waitbar(0.1, 'Calculating Gamma...');
+
+% Retrieve Gamma criteria
+c = textscan(get(handles.gamma_text, 'String'), '%f%%/%f mm');
+
+% Execute CalcGamma using restricted 3D search
+handles.gamma = CalcGamma(handles.referenceDose, ...
+    handles.secondDose, c{1}, c{2}, ...
+    'local', str2double(get(handles.local_menu, 'Value'))-1, 'refval', ...
+    max(max(max(handles.referenceDose.data))), 'restrict', 1);
+
+% Eliminate gamma values below dose threshold
+handles.gamma = handles.gamma .* ...
+    (handles.referenceDose.data > str2double(handles.config.GAMMA_THRESHOLD) * ...
+    max(max(max(handles.referenceDose.data))));
+
+% Store mean gamma 
+handles.doseStats.meangamma = sum(reshape(handles.gamma, 1, [])) / ...
+    sum(reshape(handles.referenceDose.data > ...
+    str2double(handles.config.GAMMA_THRESHOLD) * ...
+    max(max(max(handles.referenceDose.data))), 1, []));
+
+% Store pass rate
+handles.doseStats.passgamma = 1 - sum(reshape(handles.gamma, 1, []) > 1) / ...
+    sum(reshape(handles.referenceDose.data > ...
+    str2double(handles.config.GAMMA_THRESHOLD) * ...
+    max(max(max(handles.referenceDose.data))), 1, []));
+
+% Update progress bar
+waitbar(0.9, progress, 'Updating statistics...');
+
+% Execute UpdateTCSDisplay to update plots with gamma index
+set(handles.tcs_menu, 'Value', 5);
+handles = UpdateTCSDisplay(handles);
+
+% Update results statistics
+set(handles.stats_table, 'Data', UpdateResults(handles));
+
+% Update line plot
+handles = UpdateLineDisplay(handles);
+
+% Close progress bar
+close(progress);
+
+% Clear temporary variables
+clear c;
+
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function trans_slider_Callback(hObject, ~, handles)
@@ -1045,14 +1195,16 @@ if ispc && isequal(get(hObject,'BackgroundColor'), ...
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function line_slider_Callback(hObject, eventdata, handles)
+function line_slider_Callback(hObject, ~, handles)
 % hObject    handle to line_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+% Call UpdateLineDisplay
+handles = UpdateLineDisplay(handles);
 
+% Update handles structure
+guidata(hObject, handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function line_slider_CreateFcn(hObject, ~, ~)
@@ -1105,8 +1257,8 @@ handles.referenceImage = [];
 handles.mergedImage = [];
 handles.referenceDose = [];
 handles.secondDose = [];
-handles.doseDiff = [];
 handles.doseStats = [];
+handles.gamma = [];
 
 % Disable plots
 if isfield(handles, 'transverse')
