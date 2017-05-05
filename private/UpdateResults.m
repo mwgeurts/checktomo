@@ -131,6 +131,57 @@ else
     table{c,2} = '';
 end
 
+% Calculation Time
+c = c + 1;
+table{c,1} = 'Calculation Time';
+if isfield(handles, 'doseStats') && isfield(handles.doseStats, 'calctime')   
+    table{c,2} = sprintf('%i minutes, %0.1f seconds', ...
+        floor(handles.doseStats.calctime/60), ...
+        mod(handles.doseStats.calctime, 60));
+else
+    table{c,2} = '';
+end
+
+% Calculation Time
+c = c + 1;
+table{c,1} = 'Dose Grid';
+if isfield(handles, 'doseStats') && isfield(handles.doseStats, 'gridSize')   
+    table{c,2} = sprintf('%0.1f mm x %0.1f mm x %0.1f mm', ...
+        handles.doseStats.gridSize * 10);
+else
+    table{c,2} = '';
+end
+
+% Mean Dose Difference
+c = c + 1;
+table{c,1} = sprintf('Mean Dose Difference (>%0.0f%%)', ...
+    str2double(handles.config.DOSE_THRESHOLD) * 100);
+if isfield(handles, 'doseStats') && isfield(handles.doseStats, 'meandiff')   
+    table{c,2} = sprintf('%0.2f%%', handles.doseStats.meandiff * 100);
+else
+    table{c,2} = '';
+end
+
+% Gamma Pass Rate
+c = c + 1;
+table{c,1} = sprintf('Gamma Pass Rate (>%0.0f%%)', ...
+    str2double(handles.config.GAMMA_THRESHOLD) * 100);
+if isfield(handles, 'doseStats') && isfield(handles.doseStats, 'passgamma')   
+    table{c,2} = sprintf('%0.2f%%', handles.doseStats.passgamma * 100);
+else
+    table{c,2} = '';
+end
+
+% Mean Gamma
+c = c + 1;
+table{c,1} = sprintf('Mean Gamma Index (>%0.0f%%)', ...
+    str2double(handles.config.GAMMA_THRESHOLD) * 100);
+if isfield(handles, 'doseStats') && isfield(handles.doseStats, 'meangamma')   
+    table{c,2} = sprintf('%0.2f', handles.doseStats.meangamma);
+else
+    table{c,2} = '';
+end
+
 % Log completion
 Event(sprintf(['Results table updated successfully in %0.3f', ...
     ' seconds'], toc));

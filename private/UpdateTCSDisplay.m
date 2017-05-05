@@ -125,23 +125,40 @@ switch get(handles.tcs_menu, 'Value')
         % Check if the planned dose and image are loaded
         if isfield(handles, 'referenceDose') && ...
                 isfield(handles.referenceDose, 'data') ...
-                && isfield(handles, 'doseDiff') && ...
-                ~isempty(handles.doseDiff)
+                && isfield(handles, 'secondDose') && ...
+                isfield(handles.secondDose, 'data')
+            
+            % Initialize difference structure
+            diff.width = handles.referenceDose.width;
+            diff.dimensions = handles.referenceDose.dimensions;
+            diff.start = handles.referenceDose.start;
+            
+            % Store dose difference
+            diff.data = handles.secondDose.data - handles.referenceDose.data;
+
+            % Compute local or global relative difference based on setting
+            if get(handles.local_menu, 'Value') == 1
+                diff.data = diff.data / ...
+                    max(max(max(handles.referenceDose.data))) * 100;
+            else
+                diff.data = diff.data ./ handles.referenceDose.data * 100;
+                diff.data(diff.data > 100) = 100;
+            end
             
             % Initialize transverse axes with the relative doseDiff
-            handles.transverse.Initialize('overlay', handles.doseDiff ./ ...
-                image1.data .* (referenceDose.data > 1) * 100);
+            handles.transverse.Initialize('overlay', diff);
             
             % Initialize coronal axes with the relative doseDiff
-            handles.coronal.Initialize('overlay', handles.doseDiff ./ ...
-                image1.data .* (referenceDose.data > 1) * 100);
+            handles.coronal.Initialize('overlay', diff);
             
             % Initialize sagittal axes with the relative doseDiff
-            handles.sagittal.Initialize('overlay', handles.doseDiff ./ ...
-                image1.data .* (referenceDose.data > 1) * 100);
+            handles.sagittal.Initialize('overlay', diff);
             
             % Enable transparency input
             set(handles.alpha, 'visible', 'on');
+            
+            % Clear temporary variable
+            clear diff;
         else
             % Log why plot was not displayed
             Event('Dose difference not displayed as no data exists');
@@ -154,22 +171,34 @@ switch get(handles.tcs_menu, 'Value')
         Event('Absolute dose difference plot selected');
         
         % Check if the planned dose and image are loaded
-        if isfield(handles, 'referenceImage') && ...
-                isfield(handles.referenceImage, 'data') ...
-                && isfield(handles, 'doseDiff') && ...
-                ~isempty(handles.doseDiff)
-                
-            % Initialize transverse axes with the doseDiff
-            handles.transverse.Initialize('overlay', handles.doseDiff);
+        if isfield(handles, 'referenceDose') && ...
+                isfield(handles.referenceDose, 'data') ...
+                && isfield(handles, 'secondDose') && ...
+                isfield(handles.secondDose, 'data')
             
-            % Initialize coronal axes with the doseDiff
-            handles.coronal.Initialize('overlay', handles.doseDiff);
+            % Initialize difference structure
+            diff.width = handles.referenceDose.width;
+            diff.dimensions = handles.referenceDose.dimensions;
+            diff.start = handles.referenceDose.start;
             
-            % Initialize sagittal axes with the doseDiff
-            handles.sagittal.Initialize('overlay', handles.doseDiff);
+            % Store dose difference
+            diff.data = handles.secondDose.data - ...
+                handles.referenceDose.data;
+            
+            % Initialize transverse axes with the relative doseDiff
+            handles.transverse.Initialize('overlay', diff);
+            
+            % Initialize coronal axes with the relative doseDiff
+            handles.coronal.Initialize('overlay', diff);
+            
+            % Initialize sagittal axes with the relative doseDiff
+            handles.sagittal.Initialize('overlay', diff);
             
             % Enable transparency input
             set(handles.alpha, 'visible', 'on');
+            
+            % Clear temporary variable
+            clear diff;
         else
             % Log why plot was not displayed
             Event('Dose difference not displayed as no data exists');
@@ -186,18 +215,27 @@ switch get(handles.tcs_menu, 'Value')
                 isfield(handles.referenceImage, 'data') ...
                 && isfield(handles, 'gamma') && ...
                 ~isempty(handles.gamma)
-                
+            
+            % Initialize difference structure
+            gamma.width = handles.referenceDose.width;
+            gamma.dimensions = handles.referenceDose.dimensions;
+            gamma.start = handles.referenceDose.start;
+            gamma.data = handles.gamma;
+            
             % Initialize transverse axes with the doseDiff
-            handles.transverse.Initialize('overlay', handles.gamma);
+            handles.transverse.Initialize('overlay', gamma);
             
             % Initialize coronal axes with the doseDiff
-            handles.coronal.Initialize('overlay', handles.gamma);
+            handles.coronal.Initialize('overlay', gamma);
             
             % Initialize sagittal axes with the doseDiff
-            handles.sagittal.Initialize('overlay', handles.gamma);
+            handles.sagittal.Initialize('overlay', gamma);
             
             % Enable transparency input
             set(handles.alpha, 'visible', 'on');
+            
+            % Clear temporary variable
+            clear diff;
         else
             % Log why plot was not displayed
             Event('Gamma index not displayed as no data exists');
