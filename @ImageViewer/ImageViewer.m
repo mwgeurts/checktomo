@@ -1,4 +1,4 @@
-classdef ImageViewer
+classdef ImageViewer < handle
     
     % Define image viewer properties
     properties (Access = protected)
@@ -104,6 +104,10 @@ classdef ImageViewer
             % Hide this display
             set(allchild(obj.axis), 'visible', 'off'); 
             set(obj.axis, 'visible', 'off');
+            
+            % Remove zoom limits
+            obj.axis.XLim = [0 1];
+            obj.axis.YLim = [0 1]
             
             % If a slider was included, hide it too
             if ~isempty(obj.slider) && ishandle(obj.slider)
