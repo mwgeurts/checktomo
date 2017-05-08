@@ -595,7 +595,7 @@ if ~isequal(name, 0)
         set(handles.stats_table, 'Data', UpdateResults(handles));
         
         % Update line plot
-        handles = UpdateLineDisplay(handles);
+        handles = UpdateLineDisplay(handles, '0');
         
         % Enable the calculation options
         set(handles.method_menu, 'Enable', 'On');
@@ -681,7 +681,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), ...
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function gamma_text_Callback(hObject, eventdata, handles)
+function gamma_text_Callback(hObject, ~, handles)
 % hObject    handle to gamma_text (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -796,6 +796,14 @@ else
    %
    %
     
+end
+
+% If a gamma calculation exists
+if isfield(handles, 'gamma') && ~isempty(handles.gamma)
+    
+    % Clear it
+    Event('Clearing existing Gamma map');
+    handles.gamma = [];
 end
 
 % Log event
@@ -997,7 +1005,7 @@ if isfield(handles, 'secondDose') && isstruct(handles.secondDose)
         handles.referenceDose.dvh, handles.secondDose.dvh));
     
     % Update line plot
-    handles = UpdateLineDisplay(handles);
+    handles = UpdateLineDisplay(handles, '0');
     
     % Update results
     set(handles.stats_table, 'Data', UpdateResults(handles));
@@ -1064,7 +1072,7 @@ handles = UpdateTCSDisplay(handles);
 set(handles.stats_table, 'Data', UpdateResults(handles));
 
 % Update line plot
-handles = UpdateLineDisplay(handles);
+handles = UpdateLineDisplay(handles, '0');
 
 % Close progress bar
 close(progress);
@@ -1083,6 +1091,9 @@ function trans_slider_Callback(hObject, ~, handles)
 
 % Update transverse plot
 handles.transverse.Update('slice', round(get(hObject, 'Value')));
+
+% Update line plot
+handles = UpdateLineDisplay(handles, '0');
 
 % Update handles structure
 guidata(hObject, handles);
@@ -1108,6 +1119,9 @@ function cor_slider_Callback(hObject, ~, handles)
 % Update coronal plot
 handles.coronal.Update('slice', round(get(hObject, 'Value')));
 
+% Update line plot
+handles = UpdateLineDisplay(handles, '0');
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -1131,6 +1145,9 @@ function sag_slider_Callback(hObject, ~, handles)
 
 % Update sagittal plot
 handles.sagittal.Update('slice', round(get(hObject, 'Value')));
+
+% Update line plot
+handles = UpdateLineDisplay(handles, '0');
 
 % Update handles structure
 guidata(hObject, handles);

@@ -167,7 +167,7 @@ c = c + 1;
 table{c,1} = sprintf('Gamma Pass Rate (>%0.0f%%)', ...
     str2double(handles.config.GAMMA_THRESHOLD) * 100);
 if isfield(handles, 'doseStats') && isfield(handles.doseStats, 'passgamma')   
-    table{c,2} = sprintf('%0.2f%%', handles.doseStats.passgamma * 100);
+    table{c,2} = sprintf('%0.1f%%', handles.doseStats.passgamma * 100);
 else
     table{c,2} = '';
 end
@@ -177,7 +177,7 @@ c = c + 1;
 table{c,1} = sprintf('Mean Gamma Index (>%0.0f%%)', ...
     str2double(handles.config.GAMMA_THRESHOLD) * 100);
 if isfield(handles, 'doseStats') && isfield(handles.doseStats, 'meangamma')   
-    table{c,2} = sprintf('%0.2f', handles.doseStats.meangamma);
+    table{c,2} = sprintf('%0.3f', handles.doseStats.meangamma);
 else
     table{c,2} = '';
 end

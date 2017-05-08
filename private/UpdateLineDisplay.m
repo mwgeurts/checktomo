@@ -19,11 +19,19 @@ if nargin == 0
     % Stop execution
     return;
     
-% Otherwise, if 3, set the input variable and update the plot
+% Otherwise, if 1, set the handles and update the plot
 elseif nargin == 1
     
     % Set input variables
     handles = varargin{1};
+    update = 1;
+    
+% Otherwise, if 2, set the handles/update flags and update the plot
+elseif nargin == 2
+    
+    % Set input variables
+    handles = varargin{1};
+    update = varargin{2};
 
     % Start timer
     tic;
@@ -33,20 +41,24 @@ else
     Event('Incorrect number of inputs to UpdateLineDisplay', 'ERROR');
 end
 
-% Update TCS display
-switch get(handles.line_menu, 'Value')
+% If the update flag is passed
+if update == 1
+    
+    % Update TCS display
+    switch get(handles.line_menu, 'Value')
 
-    % X Profile
-    case 1
-        handles.transverse.Update;
-    
-    % Y Profile
-    case 2
-        handles.coronal.Update;
-    
-    % Z Profile
-    case 3
-        handles.sagittal.Update;
+        % X Profile
+        case 1
+            handles.transverse.Update;
+
+        % Y Profile
+        case 2
+            handles.coronal.Update;
+
+        % Z Profile
+        case 3
+            handles.sagittal.Update;
+    end
 end
 
 % Clear and set reference to axis
@@ -97,23 +109,71 @@ if isfield(handles, 'referenceDose') && ...
                     10 / handles.referenceDose.dimensions(2)]);
             end
             
+            % Turn on slider
+            set(handles.line_slider, 'Visible', 'on');
+            
             % Plot line profile along IEC X at slider position
             plot(x, handles.referenceDose.data(:, ...
                 round(get(handles.line_slider, 'Value')), ...
-                round(get(handles.trans_slider, 'Value'))));
+                round(get(handles.trans_slider, 'Value'))), '-b');
+            
+            % Add legend entry
+            l{1} = 'Planned';
+            
+            % Plot secondary dose, if it exists
+            if isfield(handles, 'secondDose') && ...
+                    isfield(handles.secondDose, 'data')
+
+                % Hold plot build
+                hold on;
+                
+                % Plot line profile along IEC X at slider position
+                plot(x, handles.secondDose.data(:, ...
+                    round(get(handles.line_slider, 'Value')), ...
+                    round(get(handles.trans_slider, 'Value'))), '--b');
+                
+                % Add legend entry
+                l{2} = 'Re-calculated';
+                
+                % Resume plot build
+                hold off;
+            end
+            
+            % Plot Gamma profile, if it exists
+            if isfield(handles, 'gamma') && ~isempty(handles.gamma)
+
+                % Hold plot build
+                hold on;
+                
+                % Plot Gamma against second Y axis
+                yyaxis right
+                
+                % Plot line profile along IEC X at slider position
+                plot(x, handles.gamma(:, ...
+                    round(get(handles.line_slider, 'Value')), ...
+                    round(get(handles.trans_slider, 'Value'))), '-.r');
+                
+                % Add legend entry
+                l{3} = 'Gamma';
+                
+                % Resume plot build
+                hold off;
+                
+                % Adjust second axis display
+                set(handles.line_axes, 'YColor', 'black');
+                ylabel('Gamma Index');
+                ylim([0 2]);
+                
+                % Go back to left axis
+                yyaxis left
+            end
+            
+            % Adjust plot display
             xlim([min(x) max(x)]);
             xlabel('X Axis Position (cm)');
             ylabel('Dose (Gy)');
             grid on;
-            
-            % Turn on slider
-            set(handles.line_slider, 'Visible', 'on');
-
-            %
-            %
-            % Plot secondary data
-            %
-            %
+            legend(l, 'Location', 'southwest');
             
             % Display line on TCS plot for current slice position
             axes(handles.trans_axes);
@@ -128,7 +188,6 @@ if isfield(handles, 'referenceDose') && ...
                 round(get(handles.line_slider, 'Value'))))], ...
                 'Color', 'white', 'LineWidth', 1);
             hold off;
-            
             
         % Y Profile
         case 2
