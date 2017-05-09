@@ -1,13 +1,40 @@
 function varargout = UpdateLineDisplay(varargin)
+% UpdateLineDisplay displays a line plot of the primary and secondary dose
+% and Gamma index, if present. This function also uses/updates a slider UI
+% handle specify which slice to display, as well as a menu UI handle to
+% determine which axis to plot along. If called with no arguments, this
+% function will return a cell array of strings indicating the menu list
+% options. If called with one or two inputs, where the first is a guihandle
+% input and the second is an optional flag (0 or 1, defaults to 1 if not 
+% present), this function will render the plot to the axes UI handle 
+% line_axis. The optional flag determines whether or not to update the
+% associated TCS axes (a line is displayed on the corresponding TCS display
+% indicating where the line plot is).
+%
+% Author: Mark Geurts, mark.w.geurts@gmail.com
+% Copyright (C) 2017 University of Wisconsin Board of Regents
+%
+% This program is free software: you can redistribute it and/or modify it 
+% under the terms of the GNU General Public License as published by the  
+% Free Software Foundation, either version 3 of the License, or (at your 
+% option) any later version.
+%
+% This program is distributed in the hope that it will be useful, but 
+% WITHOUT ANY WARRANTY; without even the implied warranty of 
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+% Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License along 
+% with this program. If not, see http://www.gnu.org/licenses/.
 
 % Run in try-catch to log error via Event.m
 try
 
 % Specify plot options and order
 plotoptions = {
-    'X Profile'
-    'Y Profile'
-    'Z Profile'
+    'IEC X Profile'
+    'IEC Y Profile'
+    'IEC Z Profile'
 };
 
 % If no input arguments are provided
