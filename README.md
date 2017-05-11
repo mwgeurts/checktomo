@@ -26,13 +26,13 @@ To install this application as a MATLAB App, download and execute the `CheckTomo
 
 To run the application, execute this function `CheckTomo` with no inputs. Once the user interface loads, click Browse and select the patient archive to load. If multiple approved helical plans exist in the archive, a list menu will appear allowing you to select a plan. Once the plan loads, select the re-calculation method and resolution and click Calculate Dose. Finally, after the dose calculation is complete, enter  the desired Gamma Index criteria click Calculate Gamma to compare the two  dose distributions.
 
-This application reads in a set of configuration options in the provided file config.txt. Refer to the documentation in the code for more information on how each configuration option is defined.
+This application reads in a set of configuration options in the provided file config.txt. Refer to the documentation in the code for more information on how each configuration option is defined. The `REMOTE_*` and `MATLAB_POOL` options are commonly edited and are discussed below.
 
 By default, this application will only enable the standalone dose calculator method options if the gpusadose and sadose applications are locally installed and part of the current path. To enable this tool to connect to another computer that has these executables installed, add the following configuration options to the config.txt file: `REMOTE_CALC_SERVER`, `REMOTE_CALC_USER`, and `REMOTE_CALC_PASS`, where the server is the IP address or DNS name of the computer, and the other two are a username and password for an account that has access to connect to the computer (via SSH) and execute the gpusadose and/or sadose applications.
 
 ## Compatibility and Requirements
 
-When running MATLAB based dose calculations, this application will attempt to start a local parallel pool using the default profile. Users who do not have the Parallel Computing toolbox licensed should remove the `MATLAB_POOL` configuration option from config.txt.
+When running MATLAB based dose calculations, this application will attempt to start a local parallel pool using the default profile. Users who do not have the Parallel Computing toolbox licensed should remove the `MATLAB_POOL` configuration option from config.txt. To change the number of workers accessed by this tool, change the value of `MATLAB_POOL` in config.txt.
 
 For Gamma calculation, if the Parallel Computing Toolbox is enabled, `CalcGamma()` will attempt to compute the three-dimensional computation using a compatible CUDA device.  To test whether the local system has a GPU compatible device installed, run `gpuDevice(1)` in MATLAB.  All GPU calls in this application are executed in a try-catch statement, and automatically revert to an equivalent (albeit longer) CPU based computation if not available or if the available memory is insufficient.
 
