@@ -125,6 +125,11 @@ if exist('dqaDVH', 'var') && ~isempty(dqaDVH) && ...
             % values)
             [u, v, ~] = unique(flipud(dqaDVH(:, i)));
 
+            % If the DVH is empty, skip this structure
+            if max(isnan(u)) == 1
+                continue;
+            end
+            
             % Interpolate DVH to Dx value 
             stats{i,5} = sprintf('%0.1f', interp1(u, w(v), ...
                 str2double(stats{i,3}), 'linear'));
