@@ -176,6 +176,19 @@ if exist('LoadAtlas', 'file') ~= 2
         'ERROR');
 end
 
+% Add ImageViewer submodule to search path
+addpath('./tcs_plots');
+
+% Check if MATLAB can find @ImageViewer
+if exist('ImageViewer', 'class') ~= 8
+    
+    % If not, throw an error
+    Event(['The tcs_plots submodule does not exist in the ', ...
+        'search path. Use git clone --recursive or git submodule init ', ...
+        'followed by git submodule update to fetch all submodules'], ...
+        'ERROR');
+end
+
 %% Load configuration settings
 % Open file handle to config.txt file
 fid = fopen('config.txt', 'r');
