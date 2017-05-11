@@ -136,6 +136,9 @@ switch get(handles.tcs_menu, 'Value')
             % Store dose difference
             diff.data = handles.secondDose.data - handles.referenceDose.data;
 
+            % Crop differences where second calc is zero
+            diff.data(handles.secondDose.data == 0) = 0;
+            
             % Compute local or global relative difference based on setting
             if get(handles.local_menu, 'Value') == 1
                 diff.data = diff.data / ...
@@ -184,6 +187,9 @@ switch get(handles.tcs_menu, 'Value')
             % Store dose difference
             diff.data = handles.secondDose.data - ...
                 handles.referenceDose.data;
+            
+            % Crop differences where second calc is zero
+            diff.data(handles.secondDose.data == 0) = 0;
             
             % Initialize transverse axes with the relative doseDiff
             handles.transverse.Initialize('overlay', diff);
