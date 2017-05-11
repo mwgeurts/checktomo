@@ -1,26 +1,58 @@
 function varargout = CheckTomo(varargin)
-% CHECKTOMO MATLAB code for CheckTomo.fig
-%      CHECKTOMO, by itself, creates a new CHECKTOMO or raises the existing
-%      singleton*.
+% CheckTomo opens a GUI that allows users to load a plan and re-calculate
+% the plan dose for helical tomotherapy plans, then compare the second dose
+% calculation to the TPS. This application is named after and is an adapted
+% form of the CheckTomo software developed by Simon Thomas. It has been
+% modified to use TomoTherapy patient archives to load files, as well as
+% allow calculation using either the MATLAB dose calculation algorithm
+% developed by Simon Thomas or using a research standalone dose calculator
+% provided by Accuray Incorporated.
 %
-%      H = CHECKTOMO returns the handle to a new CHECKTOMO or the handle to
-%      the existing singleton*.
+% For more information on the MATLAB dose calculation algorithm, see Thomas 
+% et al. Independent dose calculation software for tomotherapy, Med Phys 
+% 2015; 39: 160-167. The original tool, CheckTomo, can be obtained through
+% the GPL license by contacting Simon Thomas (refer to the correspondence
+% address in the journal article referenced above for contact information).
 %
-%      CHECKTOMO('CALLBACK',hObject,eventData,handles,...) calls the local_menu
-%      function named CALLBACK in CHECKTOMO.M with the given input arguments.
+% To run the application, execute this function `CheckTomo` with no inputs.
+% Once the user interface loads, click Browse and select the patient
+% archive to load. If multiple approved helical plans exist in the archive,
+% a list menu will appear allowing you to select a plan. Once the plan
+% loads, select the re-calculation method and resolution and click
+% Calculate Dose. Finally, after the dose calculation is complete, enter 
+% the desired Gamma Index criteria click Calculate Gamma to compare the two 
+% dose distributions.
 %
-%      CHECKTOMO('Property','Value',...) creates a new CHECKTOMO or raises the
-%      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before CheckTomo_OpeningFcn gets called.  An
-%      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to CheckTomo_OpeningFcn via varargin.
+% This application reads in a set of configuration options in the provided
+% file config.txt. Refer to the documentation in the code for more
+% information on how each configuration option is defined.
 %
-%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
-%      instance to run (singleton)".
+% By default, this application will only enable the standalone dose
+% calculator method options if the gpusadose and sadose applications are
+% locally installed and part of the current path. To enable this tool to
+% connect to another computer that has these executables installed, add the
+% following configuration options to the config.txt file: 
+% REMOTE_CALC_SERVER, REMOTE_CALC_USER, and REMOTE_CALC_PASS, where the
+% server is the IP address or DNS name of the computer, and the other two
+% are a username and password for an account that has access to connect to
+% the computer (via SSH) and execute the gpusadose and/or sadose
+% applications.
 %
-% See also: GUIDE, GUIDATA, GUIHANDLES
-
-% Edit the above text to modify the response to help CheckTomo
+% Author: Mark Geurts, mark.w.geurts@gmail.com
+% Copyright (C) 2017 University of Wisconsin Board of Regents
+%
+% This program is free software: you can redistribute it and/or modify it 
+% under the terms of the GNU General Public License as published by the  
+% Free Software Foundation, either version 3 of the License, or (at your 
+% option) any later version.
+%
+% This program is distributed in the hope that it will be useful, but 
+% WITHOUT ANY WARRANTY; without even the implied warranty of 
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+% Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License along 
+% with this program. If not, see http://www.gnu.org/licenses/.
 
 % Last Modified by GUIDE v2.5 03-May-2017 15:54:36
 
