@@ -1,0 +1,124 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration build-checksum="1224740243" file="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo/CheckTomo.prj" location="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo" name="CheckTomo" target="target.mlapps" target-name="Package App">
+    <param.appname>CheckTomo</param.appname>
+    <param.authnamewatermark>Mark Geurts</param.authnamewatermark>
+    <param.email>mark.w.geurts@gmail.com</param.email>
+    <param.company>University of Wisconsin-Madison</param.company>
+    <param.icon />
+    <param.icons />
+    <param.summary>TomoTherapy Secondary Dose Calculation Tool</param.summary>
+    <param.description>CheckTomo opens a GUI that allows users to load a plan and re-calculate the plan dose for helical tomotherapy plans, then compare the second dose calculation to the TPS. This application is named after and is an adapted form of the CheckTomo software developed by Simon Thomas. It has been modified to use TomoTherapy patient archives to load files, as well as allow calculation using either the MATLAB dose calculation algorithm developed by Simon Thomas or using a research standalone dose calculator provided by Accuray Incorporated.
+
+For more information on the MATLAB dose calculation algorithm, see Thomas et al. Independent dose calculation software for tomotherapy, Med Phys 2015; 39: 160-167. The original tool, CheckTomo, can be obtained through the GPL license by contacting Simon Thomas (refer to the correspondence address in the journal article referenced above for contact information).
+
+TomoTherapy is a registered trademark of Accuray Incorporated.</param.description>
+    <param.screenshot />
+    <param.version>1.0.0</param.version>
+    <param.products.name>
+      <item>MATLAB</item>
+      <item>Parallel Computing Toolbox</item>
+    </param.products.name>
+    <param.products.id>
+      <item>1</item>
+      <item>80</item>
+    </param.products.id>
+    <param.products.version>
+      <item>9.1</item>
+      <item>6.9</item>
+    </param.products.version>
+    <param.platforms />
+    <param.output>/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo</param.output>
+    <param.guid>fef48ecc-347d-4eee-b0f4-b0b6b2708b97</param.guid>
+    <unset>
+      <param.authnamewatermark />
+      <param.email />
+      <param.company />
+      <param.icon />
+      <param.icons />
+      <param.screenshot />
+      <param.platforms />
+      <param.output />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}/CheckTomo.m</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${MATLAB_ROOT}/toolbox/local/userpath.m</file>
+      <file>${PROJECT_ROOT}/CheckTomo.fig</file>
+      <file>${PROJECT_ROOT}/Event.m</file>
+      <file>${PROJECT_ROOT}/config.txt</file>
+      <file>${PROJECT_ROOT}/gamma/CalcGamma.m</file>
+      <file>${PROJECT_ROOT}/private/InitializeStatistics.m</file>
+      <file>${PROJECT_ROOT}/private/LoadVersionInfo.m</file>
+      <file>${PROJECT_ROOT}/private/UpdateDVH.m</file>
+      <file>${PROJECT_ROOT}/private/UpdateDoseStatistics.m</file>
+      <file>${PROJECT_ROOT}/private/UpdateLineDisplay.m</file>
+      <file>${PROJECT_ROOT}/private/UpdateResults.m</file>
+      <file>${PROJECT_ROOT}/private/UpdateTCSDisplay.m</file>
+      <file>${PROJECT_ROOT}/structure_atlas/LoadAtlas.m</file>
+      <file>${PROJECT_ROOT}/tcs_plots/@ImageViewer/ImageViewer.m</file>
+      <file>${PROJECT_ROOT}/tcs_plots/@ImageViewer/Initialize.m</file>
+      <file>${PROJECT_ROOT}/tcs_plots/@ImageViewer/Update.m</file>
+      <file>${PROJECT_ROOT}/thomas_tomocalc/CheckTomoDose.m</file>
+      <file>${PROJECT_ROOT}/thomas_tomocalc/private/dose_from_projection.m</file>
+      <file>${PROJECT_ROOT}/thomas_tomocalc/private/radpath.m</file>
+      <file>${PROJECT_ROOT}/thomas_tomocalc/private/readTomodata.m</file>
+      <file>${PROJECT_ROOT}/thomas_tomocalc/private/segmentprojection.m</file>
+      <file>${PROJECT_ROOT}/thomas_tomocalc/private/split_projection.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/CalcDose.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/FindIVDT.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/FindPlans.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/LoadImage.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/LoadPlan.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/LoadPlanDose.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/LoadStructures.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/scp.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/scp_get.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/scp_put.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_command.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_config.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_main.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_setup.m</file>
+      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_simple_command.m</file>
+    </fileset.depfun>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}/LICENSE.md</file>
+      <file>${PROJECT_ROOT}/README.md</file>
+      <file>${PROJECT_ROOT}/model</file>
+      <file>${PROJECT_ROOT}/model/dcom.header</file>
+      <file>${PROJECT_ROOT}/model/fat.img</file>
+      <file>${PROJECT_ROOT}/model/kernel.img</file>
+      <file>${PROJECT_ROOT}/model/lft.img</file>
+      <file>${PROJECT_ROOT}/model/penumbra.img</file>
+      <file>${PROJECT_ROOT}/structure_atlas/atlas.xml</file>
+      <file>${PROJECT_ROOT}/thomas_tomocalc/private/LA4data10.txt</file>
+      <file>${PROJECT_ROOT}/thomas_tomocalc/private/LA4data25.txt</file>
+      <file>${PROJECT_ROOT}/thomas_tomocalc/private/LA4data50.txt</file>
+    </fileset.resources>
+    <fileset.package />
+    <build-deliverables>
+      <file location="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator" name="checktomo" optional="false">/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>/Applications/MATLAB_R2016b.app</root>
+      <toolboxes />
+    </matlab>
+    <platform>
+      <unix>true</unix>
+      <mac>true</mac>
+      <windows>false</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.12.4</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>maci64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
