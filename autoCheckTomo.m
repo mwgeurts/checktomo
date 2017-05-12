@@ -233,7 +233,7 @@ else
     fid = fopen(config.AUTO_RESULTS_CSV, 'w');
     
     % Print version information
-    fprintf(fid, '# TomoTherapy Second Dose Calculation autoCheck Tool\n');
+    fprintf(fid, '# TomoTherapy Second Dose Calculation autoCheckTomo Tool\n');
     fprintf(fid, '# Author: Mark Geurts <mark.w.geurts@gmail.com>\n');
     fprintf(fid, ['# See autoCheckTomo.m and README.md for ', ...
         'more information on the format of this results file\n']);
