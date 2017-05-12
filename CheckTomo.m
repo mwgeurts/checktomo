@@ -91,7 +91,7 @@ warning('off', 'all');
 handles.output = hObject;
 
 % Set version handle
-handles.version = '1.0.2';
+handles.version = '1.0.3';
 
 % Determine path of current application
 [path, ~, ~] = fileparts(mfilename('fullpath'));
@@ -508,7 +508,7 @@ if ~isequal(name, 0)
     if ~isempty(handles.plans)
         
         % If more than one plan was found
-        if length(handles.plans) > 1
+        if size(handles.plans, 1) > 1
             
             % Log event
             Event(['Multiple plans found, opening listdlg to prompt user ', ...
@@ -516,10 +516,9 @@ if ~isequal(name, 0)
 
             % Otherwise, prompt the user to select from handles.plans
             [id, ok] = listdlg('Name', 'Plan Selection', ...
-                'PromptString', ['Multiple approved plans were found. ', ...
-                'Choose which one to load:'],...
-                    'SelectionMode', 'single', 'ListSize', [500 300], ...
-                    'ListString', handles.plans);
+                'PromptString', 'Multiple approved plans were found:',...
+                    'SelectionMode', 'single', 'ListSize', [200 100], ...
+                    'ListString', handles.plans(:,2));
 
             % If the user selected cancel, throw an error
             if ok == 0
@@ -531,7 +530,7 @@ if ~isequal(name, 0)
                 Event(sprintf('User selected delivery plan UID %i', ...
                     handles.plans{id}));
                 
-                handles.planuid = handles.plans{id};
+                handles.planuid = handles.plans{id,1};
             end
 
             % Clear temporary variables
@@ -539,7 +538,7 @@ if ~isequal(name, 0)
         
         % Otherwise, only one plan exists
         else
-            handles.planuid = handles.plans{1};
+            handles.planuid = handles.plans{1,1};
         end
         
         % Initialize progress bar

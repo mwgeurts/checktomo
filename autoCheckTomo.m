@@ -69,7 +69,7 @@ function autoCheckTomo()
 warning('off','all');
 
 % Set version handle
-version = '1.0.0';
+version = '1.0.1';
 
 % Determine path of current application
 [path, ~, ~] = fileparts(mfilename('fullpath'));
@@ -427,7 +427,7 @@ while i < size(folderList, 1)
         
         % Loop through each plan
         Event('Looping through each approved plan');
-        for j = 1:size(approvedPlans, 2)
+        for j = 1:size(approvedPlans, 1)
             
             % Initialize flag to indicate whether the current plan
             % already contains contents in AUTO_RESULTS_CSV
@@ -442,7 +442,7 @@ while i < size(folderList, 1)
                     % If the XML SHA1 signature, plan UID, calc method, & 
                     % versions match
                     if strcmp(results{2}{k}, sha) && ...
-                            strcmp(results{3}{k}, approvedPlans{j}) && ...
+                            strcmp(results{3}{k}, approvedPlans{j,1}) && ...
                             strcmp(results{4}{k}, ...
                             methods{config.DEFAULT_CALC_METHOD}) && ...
                             strcmp(results{14}{k}, version)
@@ -466,14 +466,14 @@ while i < size(folderList, 1)
                 try 
                     % Log start
                     Event(sprintf(['Executing CheckTomo workflow', ...
-                        ' on plan UID %s'], approvedPlans{j}));
+                        ' on plan UID %s'], approvedPlans{j,1}));
                     
                     %% Load Reference Data
                     % Load the plan
-                    refPlan = LoadPlan(path, name, approvedPlans{j});
+                    refPlan = LoadPlan(path, name, approvedPlans{j,1});
                     
                     % Load the planning CT
-                    refImage = LoadImage(path, name, approvedPlans{j});
+                    refImage = LoadImage(path, name, approvedPlans{j,1});
                     
                     % Load the structure set
                     refImage.structures = LoadStructures(path, name, ...
@@ -483,11 +483,11 @@ while i < size(folderList, 1)
                     category = FindCategory(refImage.structures, atlas);
                     
                     % Load the reference dose
-                    refDose = LoadPlanDose(path, name, approvedPlans{j});
+                    refDose = LoadPlanDose(path, name, approvedPlans{j,1});
                     
                     % Write reference DVH to .csv file
                     WriteDVH(refImage, refDose, fullfile(...
-                        config.AUTO_DVH_DIR, strcat(approvedPlans{j}, ...
+                        config.AUTO_DVH_DIR, strcat(approvedPlans{j,1}, ...
                         '_REFERENCE.csv')));
                     
                     % If DICOM flag is set, save DICOM images
@@ -495,9 +495,9 @@ while i < size(folderList, 1)
 
                         % Make CT folder unless it already exists
                         if ~isdir(fullfile(config.AUTO_DICOM_DIR, ...
-                                approvedPlans{j}))
+                                approvedPlans{j,1}))
                             mkdir(fullfile(config.AUTO_DICOM_DIR, ...
-                                approvedPlans{j}));
+                                approvedPlans{j,1}));
                         end 
                         
                         % If anon is TRUE, alter the patient's identifying
@@ -529,22 +529,22 @@ while i < size(folderList, 1)
                         % Write images to file, storing image UIDs
                         refPlan.instanceUIDs = WriteDICOMImage(refImage, ...
                             fullfile(config.AUTO_DICOM_DIR, ...
-                            approvedPlans{j}, 'CT'), refPlan);
+                            approvedPlans{j,1}, 'CT'), refPlan);
                         
                         % Write structure set to file, storing UID
                         refPlan.structureSetUID = WriteDICOMStructures(...
                             refImage.structures, fullfile(...
                             config.AUTO_DICOM_DIR, ...
-                            approvedPlans{j}, 'RTStruct.dcm'), refPlan);
+                            approvedPlans{j,1}, 'RTStruct.dcm'), refPlan);
                         
                         % Write RT plan to file, storing UID
                         refPlan.planUID = WriteDICOMTomoPlan(refPlan, ...
                             fullfile(config.AUTO_DICOM_DIR, ...
-                            approvedPlans{j}, 'RTPlan_REFERENCE.dcm'));
+                            approvedPlans{j,1}, 'RTPlan_REFERENCE.dcm'));
                         
                         % Write dose to file
                         WriteDICOMDose(refDose, fullfile(...
-                            config.AUTO_DICOM_DIR, approvedPlans{j}, ...
+                            config.AUTO_DICOM_DIR, approvedPlans{j,1}, ...
                             'RTDose_REFERENCE.dcm'), refPlan);
                     end
                     
@@ -655,7 +655,7 @@ while i < size(folderList, 1)
                     
                     % Write modified DVH to .csv file
                     WriteDVH(refImage, secDose, fullfile(config.AUTO_DVH_DIR, ...
-                        strcat(approvedPlans{j}, '_', method, '.csv')));
+                        strcat(approvedPlans{j,1}, '_', method, '.csv')));
 
                     % If DICOM flag is set, save DICOM images
                     if str2double(config.AUTO_SAVE_DICOM) == 1
@@ -686,12 +686,12 @@ while i < size(folderList, 1)
 
                         % Write RT plan to file, storing UID
                         secPlan.planUID = WriteDICOMTomoPlan(secPlan, ...
-                            fullfile(config.AUTO_DICOM_DIR, approvedPlans{j}, ...
+                            fullfile(config.AUTO_DICOM_DIR, approvedPlans{j,1}, ...
                             ['RTPlan_', method, '.dcm']));
 
                         % Write dose to file
                         WriteDICOMDose(secDose, fullfile(config.AUTO_DICOM_DIR, ...
-                            approvedPlans{j}, ['RTDose_', method, '.dcm']), secPlan);
+                            approvedPlans{j,1}, ['RTDose_', method, '.dcm']), secPlan);
                     end
                     
                     % Store dose difference
@@ -765,7 +765,7 @@ while i < size(folderList, 1)
                     fprintf(fid, '%s,', sha);
                     
                     % Write plan UID in column 3
-                    fprintf(fid, '%s,', approvedPlans{j});
+                    fprintf(fid, '%s,', approvedPlans{j,1});
                     
                     % Write plan name in column 4
                     fprintf(fid, '%s,', refPlan.planLabel);
@@ -827,7 +827,7 @@ while i < size(folderList, 1)
             else
                 
                 % Otherwise, matching data was found in AUTO_RESULTS_CSV
-                Event(['UID ', approvedPlans{j}, ...
+                Event(['UID ', approvedPlans{j,1}, ...
                     ' skipped as results were found in ', ...
                     config.AUTO_RESULTS_CSV]);
             end
