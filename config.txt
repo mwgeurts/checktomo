@@ -18,3 +18,11 @@ MATLAB_POOL             =   2
 X_REMOTE_CALC_SERVER	=	ipaddress
 X_REMOTE_CALC_USER		=	username
 X_REMOTE_CALC_PASS		=	password
+AUTO_INPUT_DIR          =   ../../study_plans
+AUTO_RESULTS_CSV        =   ../../study_results/Results.csv
+AUTO_DVH_DIR            =   ../../study_results/DVHs/
+AUTO_DICOM_DIR          =   ../../study_results/DICOM/
+AUTO_SAVE_DICOM         =   1
+AUTO_ANON_RESULTS       =   0
+
+

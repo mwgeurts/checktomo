@@ -1,19 +1,19 @@
 function autoCheckTomo()
 % autoCheckTomo scans for patient archives in a preset directory 
-% (given by the variable inputDir below) and runs a secondary calculation 
+% (given by the variable AUTO_INPUT_DIR below) and runs a secondary calc 
 % using the defined method as detailed in the CheckTomo application for 
 % each plan found. A line containing the high level results is appended 
-% to the .csv file specified in the variable resultsCSV, with the DVHs
-% saved to the directory specified in the variable dvhDir below.
+% to the .csv file specified in the variable AUTO_RESULTS_CSV, with the
+% DVHs saved to the directory specified in the variable AUTO_DVH_DIR.
 %
 % If an entry already exists for the patient archive (determined by SHA1
-% signature) and plan (determined by UID), the workflow will be skipped.
-% In this manner, AutoSystematicError can be run multiple times to analyze 
-% a large directory of archives.
+% signature), calc method, and plan (determined by UID), the workflow will 
+% be skipped. In this manner, autoCheckTomo can be run multiple times to  
+% analyze a large directory of archives.
 %
-% The resultsCSV file contains the following columns:
+% The AUTO_RESULTS_CSV file contains the following columns:
 %   {1}: Full path to patient archive _patient.xml.  However, if 
-%       the variable anon is set to TRUE, will be empty.
+%       the config option AUTO_ANON_RESULTS is set to 1, will be empty.
 %   {2}: SHA1 signature of _patient.xml file
 %   {3}: Plan UID
 %	{4}: Plan Name
@@ -28,7 +28,7 @@ function autoCheckTomo()
 %   {13}: Mean Gamma index above threshold (%)
 %   {14}: Version number of autoCheckTomo when plan was run
 %
-% The dvhDir contains a .csv file for each reference and secondary plan 
+% The AUTO_DVH_DIR contains a .csv file for each reference and second plan 
 % dose in the following format. The name for each .csv file follows the
 % convention 'planuid_calc.csv', where planuid is the Plan UID and calc is
 % either 'REFERENCE' or the calculation method. The first row contains the 
@@ -38,15 +38,15 @@ function autoCheckTomo()
 % specified in the first column (in Gy).  The resolution is determined by 
 % dividing the maximum dose by 1001.
 %
-% The DICOMDDir contains a folder for each plan (using the plan UID) and
-% contains a full set of DICOM CT images, RT structure set, reference RT
-% Plan and Dose files, and an RT Plan and Dose file for each calculation,
+% The AUTO_DICOM_DIR contains a folder for each plan (using the plan UID)
+% and contains a full set of DICOM CT images, RT structure set, reference
+% RT Plan and Dose files, and an RT Plan and Dose file for each calculation
 % using the naming format RTPlan_calc.dcm and RTDose_calc.dcm, either 
 % 'REFERENCE' or the calculation method. DICOM export can be disabled by 
-% setting saveDICOM to false below.
+% setting AUTO_SAVE_DICOM to 0 in the config.txt file.
 %
 % The calculation method, resolution, and analysis parameters (Gamma
-% criteria, dose threshold, etc.) are read from the config.txt file.
+% criteria, dose threshold, etc.) are also read from the config.txt file.
 %
 % Author: Mark Geurts, mark.w.geurts@gmail.com
 % Copyright (C) 2017 University of Wisconsin Board of Regents
@@ -67,27 +67,6 @@ function autoCheckTomo()
 %% Set runtime variables
 % Turn off MATLAB warnings
 warning('off','all');
-
-% Anonymous flag.  If true, only the archive XML SHA1 signature and plan 
-% UID will be stored, and no additinal patient identifying information will
-% be included in the results
-anon = false;
-
-% Set the input directory.  This directory will be scanned for patient
-% archives during execution of autoCheckTomo. 
-inputDir = '../study_plans';
-
-% Set the .csv file where the results summary will be appended
-resultsCSV = '../study_results/Results.csv';
-
-% Set the directory where each DVH .csv will be stored. Make sure this
-% directory exists.
-dvhDir = '../study_results/DVHs/';
-
-% Set the directory where each DICOM object will be stored. Make sure
-% this directory exists, or set saveDICOM flag to false
-DICOMDir = '../study_results/DICOM/';
-saveDICOM = true;
 
 % Set version handle
 version = '1.0.0';
@@ -211,7 +190,7 @@ Event('Loaded config.txt parameters');
 
 %% Load Results .csv
 % Open file handle to current results .csv set
-fid = fopen(resultsCSV, 'r');
+fid = fopen(config.AUTO_RESULTS_CSV, 'r');
 
 % If a valid file handle was returned
 if fid > 0
@@ -229,16 +208,16 @@ if fid > 0
     
     % Log completion
     Event(sprintf('%i results loaded from %s', size(results{1}, 1) - 1, ...
-        resultsCSV));
+        config.AUTO_RESULTS_CSV));
 
 % Otherwise, create new results file, saving column headers
 else
     
     % Log generation of new file
-    Event(['Generating new results file ', resultsCSV]);
+    Event(['Generating new results file ', config.AUTO_RESULTS_CSV]);
     
     % Open write file handle to current results set
-    fid = fopen(resultsCSV, 'w');
+    fid = fopen(config.AUTO_RESULTS_CSV, 'w');
     
     % Print version information
     fprintf(fid, '# TomoTherapy Second Dose Calculation autoCheck Tool\n');
@@ -354,11 +333,11 @@ atlas = LoadAtlas(config.ATLAS_FILE);
 
 %% Start scanning for archives
 % Note beginning execution
-Event(['autoCheckTomo beginning search of ', inputDir, ...
+Event(['autoCheckTomo beginning search of ', config.AUTO_INPUT_DIR, ...
     ' for patient archives']);
 
 % Retrieve folder contents of input directory
-folderList = dir(inputDir);
+folderList = dir(config.AUTO_INPUT_DIR);
 
 % Shuffle random number generator seed
 rng shuffle;
@@ -389,7 +368,8 @@ while i < size(folderList, 1)
     elseif folderList(i).isdir == 1
         
         % Retrieve the subfolder contents
-        subFolderList = dir(fullfile(inputDir, folderList(i).name));
+        subFolderList = dir(fullfile(config.AUTO_INPUT_DIR, ...
+            folderList(i).name));
         
         % Randomize order of subfolder list
         subFolderList = subFolderList(randperm(size(subFolderList, 1)), :);
@@ -422,7 +402,7 @@ while i < size(folderList, 1)
         % Generate a SHA1 signature for the archive patient XML file using
         % the shasum system command
         [~, cmdout] = system(['shasum "', ...
-            fullfile(inputDir, folderList(i).name), '"']);
+            fullfile(config.AUTO_INPUT_DIR, folderList(i).name), '"']);
         
         % Save just the 40-character signature
         sha = cmdout(1:40);
@@ -436,7 +416,7 @@ while i < size(folderList, 1)
 
         % Generate separate path and names for XML
         [path, name, ext] = ...
-            fileparts(fullfile(inputDir, folderList(i).name));
+            fileparts(fullfile(config.AUTO_INPUT_DIR, folderList(i).name));
         name = strcat(name, ext);
         
         % Clear temporary variable
@@ -450,7 +430,7 @@ while i < size(folderList, 1)
         for j = 1:size(approvedPlans, 2)
             
             % Initialize flag to indicate whether the current plan
-            % already contains contents in resultsCSV
+            % already contains contents in AUTO_RESULTS_CSV
             found = false;
             
             % If the results .csv exists and was loaded above
@@ -507,20 +487,22 @@ while i < size(folderList, 1)
                     
                     % Write reference DVH to .csv file
                     WriteDVH(refImage, refDose, fullfile(...
-                        dvhDir, strcat(approvedPlans{j}, ...
+                        config.AUTO_DVH_DIR, strcat(approvedPlans{j}, ...
                         '_REFERENCE.csv')));
                     
                     % If DICOM flag is set, save DICOM images
-                    if saveDICOM
+                    if str2double(config.AUTO_SAVE_DICOM) == 1
 
                         % Make CT folder unless it already exists
-                        if ~isdir(fullfile(DICOMDir, approvedPlans{j}))
-                            mkdir(fullfile(DICOMDir, approvedPlans{j}));
+                        if ~isdir(fullfile(config.AUTO_DICOM_DIR, ...
+                                approvedPlans{j}))
+                            mkdir(fullfile(config.AUTO_DICOM_DIR, ...
+                                approvedPlans{j}));
                         end 
                         
                         % If anon is TRUE, alter the patient's identifying
                         % fields
-                        if anon
+                        if str2double(config.AUTO_ANON_RESULTS) == 1
                             refPlan.patientName = ...
                                 ['ANON', sprintf('%i', floor(rand()*100000))];
                             refPlan.patientID = ...
@@ -546,23 +528,24 @@ while i < size(folderList, 1)
 
                         % Write images to file, storing image UIDs
                         refPlan.instanceUIDs = WriteDICOMImage(refImage, ...
-                            fullfile(DICOMDir, approvedPlans{j}, 'CT'), ...
-                            refPlan);
+                            fullfile(config.AUTO_DICOM_DIR, ...
+                            approvedPlans{j}, 'CT'), refPlan);
                         
                         % Write structure set to file, storing UID
                         refPlan.structureSetUID = WriteDICOMStructures(...
-                            refImage.structures, fullfile(DICOMDir, ...
+                            refImage.structures, fullfile(...
+                            config.AUTO_DICOM_DIR, ...
                             approvedPlans{j}, 'RTStruct.dcm'), refPlan);
                         
                         % Write RT plan to file, storing UID
                         refPlan.planUID = WriteDICOMTomoPlan(refPlan, ...
-                            fullfile(DICOMDir, approvedPlans{j}, ...
-                            'RTPlan_REFERENCE.dcm'));
+                            fullfile(config.AUTO_DICOM_DIR, ...
+                            approvedPlans{j}, 'RTPlan_REFERENCE.dcm'));
                         
                         % Write dose to file
-                        WriteDICOMDose(refDose, fullfile(DICOMDir, ...
-                            approvedPlans{j}, 'RTDose_REFERENCE.dcm'), ...
-                            refPlan);
+                        WriteDICOMDose(refDose, fullfile(...
+                            config.AUTO_DICOM_DIR, approvedPlans{j}, ...
+                            'RTDose_REFERENCE.dcm'), refPlan);
                     end
                     
                     %% Calculate Dose
@@ -671,11 +654,11 @@ while i < size(folderList, 1)
                     calcTime = toc(calcTimer);
                     
                     % Write modified DVH to .csv file
-                    WriteDVH(refImage, secDose, fullfile(dvhDir, ...
+                    WriteDVH(refImage, secDose, fullfile(config.AUTO_DVH_DIR, ...
                         strcat(approvedPlans{j}, '_', method, '.csv')));
 
                     % If DICOM flag is set, save DICOM images
-                    if saveDICOM
+                    if str2double(config.AUTO_SAVE_DICOM) == 1
 
                         % Copy plan
                         secPlan = refPlan;
@@ -703,11 +686,11 @@ while i < size(folderList, 1)
 
                         % Write RT plan to file, storing UID
                         secPlan.planUID = WriteDICOMTomoPlan(secPlan, ...
-                            fullfile(DICOMDir, approvedPlans{j}, ...
+                            fullfile(config.AUTO_DICOM_DIR, approvedPlans{j}, ...
                             ['RTPlan_', method, '.dcm']));
 
                         % Write dose to file
-                        WriteDICOMDose(secDose, fullfile(DICOMDir, ...
+                        WriteDICOMDose(secDose, fullfile(config.AUTO_DICOM_DIR, ...
                             approvedPlans{j}, ['RTDose_', method, '.dcm']), secPlan);
                     end
                     
@@ -763,11 +746,11 @@ while i < size(folderList, 1)
 
                     %% Append Results
                     % Open append file handle to results .csv
-                    fid = fopen(resultsCSV, 'a');
+                    fid = fopen(config.AUTO_RESULTS_CSV, 'a');
 
                     % If anon is TRUE, do not store the XML name and 
                     % location in column 1
-                    if anon
+                    if str2double(config.AUTO_ANON_RESULTS) == 1
                         
                         % Instead, replace with 'ANON'
                         fprintf(fid,'ANON,'); %#ok<*UNRCH>
@@ -843,9 +826,10 @@ while i < size(folderList, 1)
                 end
             else
                 
-                % Otherwise, matching data was found in resultsCSV
+                % Otherwise, matching data was found in AUTO_RESULTS_CSV
                 Event(['UID ', approvedPlans{j}, ...
-                    ' skipped as results were found in ', resultsCSV]);
+                    ' skipped as results were found in ', ...
+                    config.AUTO_RESULTS_CSV]);
             end
         end
         
