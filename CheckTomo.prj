@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="1224740243" file="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo/CheckTomo.prj" location="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo" name="CheckTomo" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="266343654" file="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo/CheckTomo.prj" location="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo" name="CheckTomo" target="target.mlapps" target-name="Package App">
     <param.appname>CheckTomo</param.appname>
     <param.authnamewatermark>Mark Geurts</param.authnamewatermark>
     <param.email>mark.w.geurts@gmail.com</param.email>
@@ -13,7 +13,7 @@ For more information on the MATLAB dose calculation algorithm, see Thomas et al.
 
 TomoTherapy is a registered trademark of Accuray Incorporated.</param.description>
     <param.screenshot />
-    <param.version>1.0.0</param.version>
+    <param.version>1.0.1</param.version>
     <param.products.name>
       <item>MATLAB</item>
       <item>Parallel Computing Toolbox</item>
