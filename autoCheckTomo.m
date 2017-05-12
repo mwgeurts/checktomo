@@ -69,7 +69,7 @@ function autoCheckTomo()
 warning('off','all');
 
 % Set version handle
-version = '1.0.1';
+version = '1.0.2';
 
 % Determine path of current application
 [path, ~, ~] = fileparts(mfilename('fullpath'));
@@ -413,9 +413,15 @@ while i < size(folderList, 1)
     elseif size(strfind(folderList(i).name, '_patient.xml'), 1) > 0
         
         % Generate a SHA1 signature for the archive patient XML file using
-        % the shasum system command
-        [~, cmdout] = system(['shasum "', ...
-            fullfile(config.AUTO_INPUT_DIR, folderList(i).name), '"']);
+        % the shasum system command on Unix/Mac, or sha1sum on Windows
+        % (provided as part of this repository)
+        if ispc
+            [~, cmdout] = system(['sha1sum "', ...
+                fullfile(config.AUTO_INPUT_DIR, folderList(i).name), '"']);
+        else
+            [~, cmdout] = system(['shasum "', ...
+                fullfile(config.AUTO_INPUT_DIR, folderList(i).name), '"']);
+        end
         
         % Save just the 40-character signature
         sha = cmdout(1:40);
