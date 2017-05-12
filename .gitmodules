@@ -13,3 +13,6 @@
 [submodule "tcs_plots"]
 	path = tcs_plots
 	url = https://github.com/mwgeurts/tcs_plots
+[submodule "dicom_tools"]
+	path = dicom_tools
+	url = https://github.com/mwgeurts/dicom_tools

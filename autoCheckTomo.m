@@ -148,11 +148,24 @@ end
 % Add structure atlas submodule to search path
 addpath('./structure_atlas');
 
-% Check if MATLAB can find LoadDICOMImages
+% Check if MATLAB can find LoadAtlas
 if exist('LoadAtlas', 'file') ~= 2
     
     % If not, throw an error
     Event(['The Structure Atlas submodule does not exist in the ', ...
+        'search path. Use git clone --recursive or git submodule init ', ...
+        'followed by git submodule update to fetch all submodules'], ...
+        'ERROR');
+end
+
+% Add dicom_tools submodule to search path
+addpath('./dicom_tools');
+
+% Check if MATLAB can find WriteDVH
+if exist('WriteDVH', 'file') ~= 2
+    
+    % If not, throw an error
+    Event(['The DICOM Tools submodule does not exist in the ', ...
         'search path. Use git clone --recursive or git submodule init ', ...
         'followed by git submodule update to fetch all submodules'], ...
         'ERROR');
