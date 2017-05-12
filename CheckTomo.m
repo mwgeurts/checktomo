@@ -91,7 +91,7 @@ warning('off', 'all');
 handles.output = hObject;
 
 % Set version handle
-handles.version = '1.0.1';
+handles.version = '1.0.2';
 
 % Determine path of current application
 [path, ~, ~] = fileparts(mfilename('fullpath'));
@@ -502,7 +502,7 @@ if ~isequal(name, 0)
     set(handles.browse_text, 'String', fullfile(path, name));
         
     % Extract plan list
-    handles.plans = FindPlans(path, name); 
+    handles.plans = FindPlans(path, name, 'Helical'); 
     
     % If LoadDailyQA was successful
     if ~isempty(handles.plans)
@@ -857,7 +857,7 @@ Event(['Starting dose calculation using the algorithm ', ...
     handles.doseStats.resolution]);
 
 % If the user chose to use MATLAB
-if strcmp(handles.doseStats.method(1:6), 'MATLAB')
+if strcmpi(handles.doseStats.method(1:6), 'MATLAB')
     
     % Initialize progress bar
     progress = waitbar(0.1, 'Preparing dose calculation...');
@@ -907,21 +907,29 @@ if strcmp(handles.doseStats.method(1:6), 'MATLAB')
     end   
         
     % Start calculation pool, if configured
-    if isfield(handles.config, 'MATLAB_POOL') && isempty(gcp('nocreate'))
-        
-        % Update progress bar
-        waitbar(0.3, progress, 'Starting calculation pool...');
-        
-        % Log event
-        Event(sprintf('Starting calculation pool with %i workers', ...
-            str2double(handles.config.MATLAB_POOL)));
-        
-        % Start calculation pool
-        handles.pool = parpool(str2double(handles.config.MATLAB_POOL));
-    else
-        
-        % Store empty value
-        handles.pool = gcp;
+    try
+        if isfield(handles.config, 'MATLAB_POOL') && ...
+                isempty(gcp('nocreate'))
+
+            % Update progress bar
+            waitbar(0.3, progress, 'Starting calculation pool...');
+
+            % Log event
+            Event(sprintf('Starting calculation pool with %i workers', ...
+                str2double(handles.config.MATLAB_POOL)));
+
+            % Start calculation pool
+            handles.pool = parpool(str2double(handles.config.MATLAB_POOL));
+        else
+
+            % Store current value
+            handles.pool = gcp;
+        end
+     
+    % If the parallel processing toolbox is not present, the above code
+    % will fail
+    catch
+        handles.pool = [];
     end
     
     % Update progress bar
@@ -992,7 +1000,8 @@ elseif strcmp(handles.doseStats.method(1:10), ...
         handles.doseStats.downsample, 'supersample', ...
         handles.doseStats.supersample, 'azimuths', ...
         handles.doseStats.azimuths, 'sadose', handles.doseStats.sadose, ...
-        'modelfolder', handles.config.MODEL_PATH);
+        'raysteps', handles.doseStats.raysteps, 'modelfolder', ...
+        handles.config.MODEL_PATH);
  
 % Otherwise, we don't know what the option is
 else
