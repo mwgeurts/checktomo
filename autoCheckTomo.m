@@ -828,7 +828,7 @@ while i < size(folderList, 1)
                     clear fid calcTime calcTimer category diff doserate ...
                         downsample found gamma meandiff meangamma ...
                         passgamma refDose refImage refPlan secDose ...
-                        secPlan sha supersample azimuths raysteps sadose;
+                        secPlan supersample azimuths raysteps sadose;
                     
                     % Increment the count of processed images
                     count = count + 1;
@@ -853,7 +853,7 @@ while i < size(folderList, 1)
         end
         
         % Clear temporary variables
-        clear path name approvedPlans;
+        clear path name approvedPlans sha;
     end 
 end
 
