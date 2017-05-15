@@ -91,7 +91,7 @@ warning('off', 'all');
 handles.output = hObject;
 
 % Set version handle
-handles.version = '1.0.3';
+handles.version = '1.0.4';
 
 % Determine path of current application
 [path, ~, ~] = fileparts(mfilename('fullpath'));
