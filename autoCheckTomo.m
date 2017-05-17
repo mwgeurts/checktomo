@@ -336,7 +336,7 @@ if ~strcmpi(method(1:6), 'MATLAB') ...
 end
 
 % Clear temporary variables
-clear methods gpudose;
+clear gpudose;
 
 % Set downsample options
 resolutions = [1 2 4 8];
