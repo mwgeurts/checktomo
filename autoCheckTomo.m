@@ -724,7 +724,7 @@ while i < size(folderList, 1)
 
                     % Compute local or global relative difference based on 
                     % local Gamma setting
-                    if str2double(config.GAMMA_LOCAL) == 1
+                    if str2double(config.GAMMA_LOCAL) == 0
                         diff = diff / max(max(max(refDose.data)));
                     else
                         diff = diff ./ refDose.data;
