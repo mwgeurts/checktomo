@@ -767,6 +767,9 @@ while i < size(folderList, 1)
                         max(max(max(refDose.data))), 1, []));
 
                     %% Append Results
+                    % Log start
+                    Event(['Writing results to ', config.AUTO_RESULTS_CSV]);
+                    
                     % Open append file handle to results .csv
                     fid = fopen(config.AUTO_RESULTS_CSV, 'a');
 
@@ -832,6 +835,10 @@ while i < size(folderList, 1)
                         downsample found gamma meandiff meangamma ...
                         passgamma refDose refImage refPlan secDose ...
                         secPlan supersample azimuths raysteps sadose;
+                    
+                    % Log start
+                    Event(sprintf(['Completed CheckTomo workflow', ...
+                        ' on plan UID %s'], approvedPlans{j,1}));
                     
                     % Increment the count of processed images
                     count = count + 1;
