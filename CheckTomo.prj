@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="2922711518" file="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo/CheckTomo.prj" location="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo" name="CheckTomo" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="3157183177" file="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo/CheckTomo.prj" location="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo" name="CheckTomo" target="target.mlapps" target-name="Package App">
     <param.appname>CheckTomo</param.appname>
     <param.authnamewatermark>Mark Geurts</param.authnamewatermark>
     <param.email>mark.w.geurts@gmail.com</param.email>
@@ -55,16 +55,11 @@ TomoTherapy is a registered trademark of Accuray Incorporated.</param.descriptio
       <file>${PROJECT_ROOT}/private/UpdateLineDisplay.m</file>
       <file>${PROJECT_ROOT}/private/UpdateResults.m</file>
       <file>${PROJECT_ROOT}/private/UpdateTCSDisplay.m</file>
+      <file>${PROJECT_ROOT}/structure_atlas/FindCategory.m</file>
       <file>${PROJECT_ROOT}/structure_atlas/LoadAtlas.m</file>
       <file>${PROJECT_ROOT}/tcs_plots/@ImageViewer/ImageViewer.m</file>
       <file>${PROJECT_ROOT}/tcs_plots/@ImageViewer/Initialize.m</file>
       <file>${PROJECT_ROOT}/tcs_plots/@ImageViewer/Update.m</file>
-      <file>${PROJECT_ROOT}/thomas_tomocalc/CheckTomoDose.m</file>
-      <file>${PROJECT_ROOT}/thomas_tomocalc/private/dose_from_projection.m</file>
-      <file>${PROJECT_ROOT}/thomas_tomocalc/private/radpath.m</file>
-      <file>${PROJECT_ROOT}/thomas_tomocalc/private/readTomodata.m</file>
-      <file>${PROJECT_ROOT}/thomas_tomocalc/private/segmentprojection.m</file>
-      <file>${PROJECT_ROOT}/thomas_tomocalc/private/split_projection.m</file>
       <file>${PROJECT_ROOT}/tomo_extract/CalcDose.m</file>
       <file>${PROJECT_ROOT}/tomo_extract/FindIVDT.m</file>
       <file>${PROJECT_ROOT}/tomo_extract/FindPlans.m</file>
@@ -72,19 +67,17 @@ TomoTherapy is a registered trademark of Accuray Incorporated.</param.descriptio
       <file>${PROJECT_ROOT}/tomo_extract/LoadPlan.m</file>
       <file>${PROJECT_ROOT}/tomo_extract/LoadPlanDose.m</file>
       <file>${PROJECT_ROOT}/tomo_extract/LoadStructures.m</file>
-      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/scp.m</file>
-      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/scp_get.m</file>
-      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/scp_put.m</file>
-      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2.m</file>
-      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_command.m</file>
-      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_config.m</file>
-      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_main.m</file>
-      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_setup.m</file>
-      <file>${PROJECT_ROOT}/tomo_extract/ssh2_v2_m1_r6/ssh2_simple_command.m</file>
+      <file>/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/thomas_tomocalc/CheckTomoDose.m</file>
+      <file>/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/thomas_tomocalc/private/dose_from_projection.m</file>
+      <file>/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/thomas_tomocalc/private/radpath.m</file>
+      <file>/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/thomas_tomocalc/private/readTomodata.m</file>
+      <file>/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/thomas_tomocalc/private/segmentprojection.m</file>
+      <file>/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/thomas_tomocalc/private/split_projection.m</file>
     </fileset.depfun>
     <fileset.resources>
       <file>${PROJECT_ROOT}/LICENSE.md</file>
       <file>${PROJECT_ROOT}/README.md</file>
+      <file>${PROJECT_ROOT}/autoCheckTomo.m</file>
       <file>${PROJECT_ROOT}/model</file>
       <file>${PROJECT_ROOT}/model/dcom.header</file>
       <file>${PROJECT_ROOT}/model/fat.img</file>
