@@ -790,7 +790,7 @@ while i < size(folderList, 1)
                     fprintf(fid, '%s,', approvedPlans{j,1});
                     
                     % Write plan name in column 4
-                    fprintf(fid, '%s,', refPlan.planLabel);
+                    fprintf(fid, '%s,', strrep(refPlan.planLabel, ',', ' '));
                     
                     % Write plan category in column 5.  See FindCategory
                     fprintf(fid, '%s,', category);
