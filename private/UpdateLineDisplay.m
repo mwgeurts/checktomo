@@ -155,8 +155,10 @@ if isfield(handles, 'referenceDose') && ...
                 hold off;
             end
             
-            % Plot Gamma profile, if it exists
-            if isfield(handles, 'gamma') && ~isempty(handles.gamma)
+            % Plot Gamma profile, if it exists (and the function yyaxis
+            % is present, which is only R2016a and later)
+            if isfield(handles, 'gamma') && ~isempty(handles.gamma) && ...
+                    exist('yyaxis', 'file') == 6
 
                 % Hold plot build
                 hold on;
@@ -267,8 +269,10 @@ if isfield(handles, 'referenceDose') && ...
                 hold off;
             end
             
-            % Plot Gamma profile, if it exists
-            if isfield(handles, 'gamma') && ~isempty(handles.gamma)
+            % Plot Gamma profile, if it exists (and the function yyaxis
+            % is present, which is only R2016a and later)
+            if isfield(handles, 'gamma') && ~isempty(handles.gamma) && ...
+                    exist('yyaxis', 'file') == 6
 
                 % Hold plot build
                 hold on;
@@ -376,8 +380,10 @@ if isfield(handles, 'referenceDose') && ...
                 hold off;
             end
             
-            % Plot Gamma profile, if it exists
-            if isfield(handles, 'gamma') && ~isempty(handles.gamma)
+            % Plot Gamma profile, if it exists (and the function yyaxis
+            % is present, which is only R2016a and later)
+            if isfield(handles, 'gamma') && ~isempty(handles.gamma) && ...
+                    exist('yyaxis', 'file') == 6
 
                 % Hold plot build
                 hold on;
