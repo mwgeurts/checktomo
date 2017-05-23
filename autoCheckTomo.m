@@ -69,7 +69,7 @@ function autoCheckTomo()
 warning('off','all');
 
 % Set version handle
-version = '1.0.4';
+version = '1.0.5';
 
 % Determine path of current application
 [path, ~, ~] = fileparts(mfilename('fullpath'));
