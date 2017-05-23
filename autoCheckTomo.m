@@ -441,9 +441,23 @@ while i < size(folderList, 1)
         % Clear temporary variable
         clear ext;
         
-        % Search for and load all approvedPlans in the archive
-        approvedPlans = FindPlans(path, name, 'Helical');
+        % Attempt to find plans
+        try 
         
+            % Search for and load all approved plans in the archive
+            approvedPlans = FindPlans(path, name, 'Helical');
+        
+        % If an error is thrown, catch
+        catch exception
+
+            % Report exception to error log
+            Event(getReport(exception, 'extended', 'hyperlinks', ...
+                'off'), 'CATCH');
+
+            % Continue to next file
+            continue;
+        end
+                
         % Loop through each plan
         Event('Looping through each approved plan');
         for j = 1:size(approvedPlans, 1)
