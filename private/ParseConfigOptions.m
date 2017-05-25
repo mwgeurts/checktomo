@@ -1,9 +1,8 @@
-function handles = ParseConfigOptions(handles, filename)
+function config = ParseConfigOptions(filename)
 % ParseConfigOptions is executed by CheckTomo to open the config file
-% and update the application settings. The GUI handles structure and
-% configuration filename is passed to this function, and and updated
-% handles structure containing the loaded configuration options is
-% returned.
+% and update the application settings. The configuration filename is 
+% passed to this function, and a structure containing the loaded 
+% configuration options is returned.
 % 
 % Author: Mark Geurts, mark.w.geurts@gmail.com
 % Copyright (C) 2017 University of Wisconsin Board of Regents
@@ -45,7 +44,7 @@ fclose(fid);
 
 % Loop through textscan array, separating key/value pairs into array
 for i = 1:2:length(c{1})
-    handles.config.(strtrim(c{1}{i})) = strtrim(c{1}{i+1});
+    config.(strtrim(c{1}{i})) = strtrim(c{1}{i+1});
 end
 
 % Clear temporary variables
