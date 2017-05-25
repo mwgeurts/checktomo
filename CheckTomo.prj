@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="734410876" file="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo/CheckTomo.prj" location="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo" name="CheckTomo" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="1375774865" file="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo/CheckTomo.prj" location="/Users/mwgeurts/Documents/TomoTherapy/CheckTomo MATLAB Dose Calculator/checktomo" name="CheckTomo" target="target.mlapps" target-name="Package App">
     <param.appname>CheckTomo</param.appname>
     <param.authnamewatermark>Mark Geurts</param.authnamewatermark>
     <param.email>mark.w.geurts@gmail.com</param.email>
@@ -13,7 +13,7 @@ For more information on the MATLAB dose calculation algorithm, see Thomas et al.
 
 TomoTherapy is a registered trademark of Accuray Incorporated.</param.description>
     <param.screenshot />
-    <param.version>1.0.5</param.version>
+    <param.version>1.0.7</param.version>
     <param.products.name>
       <item>MATLAB</item>
       <item>Parallel Computing Toolbox</item>
@@ -48,15 +48,27 @@ TomoTherapy is a registered trademark of Accuray Incorporated.</param.descriptio
       <file>${PROJECT_ROOT}/Event.m</file>
       <file>${PROJECT_ROOT}/config.txt</file>
       <file>${PROJECT_ROOT}/gamma/CalcGamma.m</file>
-      <file>${PROJECT_ROOT}/private/InitializeStatistics.m</file>
+      <file>${PROJECT_ROOT}/private/AddSubModulePaths.m</file>
+      <file>${PROJECT_ROOT}/private/BrowsePatientArchive.m</file>
+      <file>${PROJECT_ROOT}/private/ClearAllData.m</file>
+      <file>${PROJECT_ROOT}/private/ExecuteDoseCalc.m</file>
+      <file>${PROJECT_ROOT}/private/ExecuteGammaCalc.m</file>
+      <file>${PROJECT_ROOT}/private/InitializeUI.m</file>
       <file>${PROJECT_ROOT}/private/LoadVersionInfo.m</file>
-      <file>${PROJECT_ROOT}/private/UpdateDVH.m</file>
-      <file>${PROJECT_ROOT}/private/UpdateDoseStatistics.m</file>
+      <file>${PROJECT_ROOT}/private/ParseConfigOptions.m</file>
+      <file>${PROJECT_ROOT}/private/ParseGammaCriteria.m</file>
+      <file>${PROJECT_ROOT}/private/SetDoseCalcOptions.m</file>
       <file>${PROJECT_ROOT}/private/UpdateLineDisplay.m</file>
       <file>${PROJECT_ROOT}/private/UpdateResults.m</file>
       <file>${PROJECT_ROOT}/private/UpdateTCSDisplay.m</file>
       <file>${PROJECT_ROOT}/structure_atlas/FindCategory.m</file>
       <file>${PROJECT_ROOT}/structure_atlas/LoadAtlas.m</file>
+      <file>${PROJECT_ROOT}/tcs_plots/@DVHViewer/Calculate.m</file>
+      <file>${PROJECT_ROOT}/tcs_plots/@DVHViewer/DVHViewer.m</file>
+      <file>${PROJECT_ROOT}/tcs_plots/@DVHViewer/InitializeData.m</file>
+      <file>${PROJECT_ROOT}/tcs_plots/@DVHViewer/UpdatePlot.m</file>
+      <file>${PROJECT_ROOT}/tcs_plots/@DVHViewer/UpdateTable.m</file>
+      <file>${PROJECT_ROOT}/tcs_plots/@DVHViewer/WriteFile.m</file>
       <file>${PROJECT_ROOT}/tcs_plots/@ImageViewer/ImageViewer.m</file>
       <file>${PROJECT_ROOT}/tcs_plots/@ImageViewer/Initialize.m</file>
       <file>${PROJECT_ROOT}/tcs_plots/@ImageViewer/Update.m</file>
@@ -107,7 +119,7 @@ TomoTherapy is a registered trademark of Accuray Incorporated.</param.descriptio
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>10.12.4</osver>
+      <osver>10.12.5</osver>
       <os32>false</os32>
       <os64>true</os64>
       <arch>maci64</arch>
