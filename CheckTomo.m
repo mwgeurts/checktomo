@@ -133,7 +133,7 @@ AddSubModulePaths();
 Event('Loading configuration options');
 
 % Execute ParseConfigOptions to load the global variables
-handles = ParseConfigOptions(handles, 'config.txt');
+handles.config = ParseConfigOptions('config.txt');
 
 % Initialize UI and global variables
 handles = InitializeUI(handles);
