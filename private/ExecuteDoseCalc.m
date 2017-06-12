@@ -126,7 +126,7 @@ if strcmpi(handles.doseStats.method(1:6), 'MATLAB')
         else
 
             % Store current value
-            handles.pool = gcp;
+            handles.pool = gcp('nocreate');
         end
      
     % If the parallel processing toolbox is not present, the above code
