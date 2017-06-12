@@ -617,7 +617,7 @@ while i < size(folderList, 1)
                             else
 
                                 % Store current value
-                                pool = gcp;
+                                pool = gcp('nocreate');
                             end
 
                         % If the parallel processing toolbox is not 
