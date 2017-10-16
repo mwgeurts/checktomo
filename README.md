@@ -8,7 +8,7 @@ by Mark Geurts <mark.w.geurts@gmail.com>
 
 CheckTomo is a MATLAB&reg; application that allows users to load a plan and re-calculate the plan dose for helical tomotherapy plans, then compare the second dose calculation to the TPS. This application is named after and is an adapted form of the CheckTomo software developed by Simon Thomas. It has been modified to use TomoTherapy patient archives to load files, as well as allow calculation using either the MATLAB dose calculation algorithm developed by Simon Thomas or using a research standalone dose calculator provided by Accuray Incorporated.
 
-For more information on the MATLAB dose calculation algorithm, see [Thomas et al. Independent dose calculation software for tomotherapy, Med Phys 2015; 39: 160-167](http://onlinelibrary.wiley.com/doi/10.1118/1.3668061/full). The original tool, CheckTomo, can be obtained through the GPL license by contacting Simon Thomas (refer to the correspondence address in the journal article referenced above for contact information).
+For more information on the MATLAB dose calculation algorithm, see [Thomas et al. Independent dose calculation software for tomotherapy, Med Phys 2015; 39: 160-167](http://onlinelibrary.wiley.com/doi/10.1118/1.3668061/full). The original tool, can be obtained through the GPL license by contacting Simon Thomas (refer to the correspondence address in the journal article referenced above for contact information).
 
 TomoTherapy is a registered trademark of Accuray Incorporated. MATLAB is a registered trademark of MathWorks Inc.
 
